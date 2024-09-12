@@ -1,0 +1,350 @@
+{
+  "@context": {
+    "name": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#name",
+    "subOrganizationOf": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#subOrganizationOf",
+    "degreeFrom": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#degreeFrom",
+    "doctoralDegreeFrom": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#doctoralDegreeFrom",
+    "mastersDegreeFrom": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#mastersDegreeFrom",
+    "memberOf": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#memberOf",
+    "teacherOf": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf",
+    "undergraduateDegreeFrom": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#undergraduateDegreeFrom",
+    "worksFor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#worksFor",
+    "publicationAuthor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#publicationAuthor",
+    "advisor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor",
+    "takesCourse": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse",
+    "teachingAssistantOf": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teachingAssistantOf",
+    "headOf": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#headOf",
+    "Department": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Department",
+    "Organization": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Organization",
+    "ResearchGroup": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#ResearchGroup",
+    "University": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#University",
+    "AssistantProfessor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#AssistantProfessor",
+    "Employee": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Employee",
+    "Faculty": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Faculty",
+    "Person": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Person",
+    "Professor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Professor",
+    "Course": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Course",
+    "Work": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Work",
+    "GraduateCourse": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#GraduateCourse",
+    "Publication": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Publication",
+    "GraduateStudent": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#GraduateStudent",
+    "Student": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Student",
+    "TeachingAssistant": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#TeachingAssistant",
+    "AssociateProfessor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#AssociateProfessor",
+    "FullProfessor": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#FullProfessor",
+    "ResearchAssistant": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#ResearchAssistant",
+    "Lecturer": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Lecturer",
+    "UndergraduateStudent": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent",
+    "emailAddress": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#emailAddress",
+    "telephone": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#telephone",
+    "Chair": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#Chair",
+    "hasAlumnus": "http://swat.cse.lehigh.edu/onto/univ-bench.owl#hasAlumnus"
+  },
+  "@graph": [
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_0.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_1.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_10.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_11.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_12.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_13.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_14.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_2.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_3.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_4.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_5.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_6.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_7.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_8.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "file:///home/jc/ut/code/uba1.7/data2/University0_9.owl",
+      "@type": "http://www.w3.org/2002/07/owl#Ontology",
+      "http://www.w3.org/2002/07/owl#imports": {
+        "@id": "http://cs.ut.ee/ldparser"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu",
+      "@type": "Department",
+      "name": "Department0",
+      "subOrganizationOf": {
+        "@id": "http://www.University0.edu"
+      }
+    },
+  
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication0",
+      "@type": "Publication",
+      "name": "Publication0",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent44"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent113"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication1",
+      "@type": "Publication",
+      "name": "Publication1",
+      "publicationAuthor": {
+        "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication2",
+      "@type": "Publication",
+      "name": "Publication2",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent126"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication3",
+      "@type": "Publication",
+      "name": "Publication3",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent6"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent131"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0",
+      "@type": "AssistantProfessor",
+      "doctoralDegreeFrom": {
+        "@id": "http://www.University643.edu"
+      },
+      "emailAddress": "AssistantProfessor0@Department0.University0.edu",
+      "mastersDegreeFrom": {
+        "@id": "http://www.University389.edu"
+      },
+      "name": "AssistantProfessor0",
+      "http://swat.cse.lehigh.edu/onto/univ-bench.owl#researchInterest": "Research13",
+      "teacherOf": [
+        {
+          "@id": "http://www.Department0.University0.edu/Course38"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateCourse39"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateCourse40"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/Course39"
+        }
+      ],
+      "telephone": "xxx-xxx-xxxx",
+      "undergraduateDegreeFrom": {
+        "@id": "http://www.University924.edu"
+      },
+      "worksFor": {
+        "@id": "http://www.Department0.University0.edu"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication4",
+      "@type": "Publication",
+      "name": "Publication4",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent0"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor0/Publication5",
+      "@type": "Publication",
+      "name": "Publication5",
+      "publicationAuthor": {
+        "@id": "http://www.Department0.University0.edu/AssistantProfessor0"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1",
+      "@type": "AssistantProfessor",
+      "doctoralDegreeFrom": {
+        "@id": "http://www.University246.edu"
+      },
+      "emailAddress": "AssistantProfessor1@Department0.University0.edu",
+      "mastersDegreeFrom": {
+        "@id": "http://www.University895.edu"
+      },
+      "name": "AssistantProfessor1",
+      "http://swat.cse.lehigh.edu/onto/univ-bench.owl#researchInterest": "Research1",
+      "teacherOf": [
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateCourse41"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/Course40"
+        }
+      ],
+      "telephone": "xxx-xxx-xxxx",
+      "undergraduateDegreeFrom": {
+        "@id": "http://www.University644.edu"
+      },
+      "worksFor": {
+        "@id": "http://www.Department0.University0.edu"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1/Publication0",
+      "@type": "Publication",
+      "name": "Publication0",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor1"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent93"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1/Publication1",
+      "@type": "Publication",
+      "name": "Publication1",
+      "publicationAuthor": {
+        "@id": "http://www.Department0.University0.edu/AssistantProfessor1"
+      }
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1/Publication2",
+      "@type": "Publication",
+      "name": "Publication2",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor1"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent51"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1/Publication3",
+      "@type": "Publication",
+      "name": "Publication3",
+      "publicationAuthor": [
+        {
+          "@id": "http://www.Department0.University0.edu/AssistantProfessor1"
+        },
+        {
+          "@id": "http://www.Department0.University0.edu/GraduateStudent33"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.Department0.University0.edu/AssistantProfessor1/Publication4",
+      "@type": "Publication",
+      "name": "Publication4",
+      "publicationAuthor": {
+        "@id": "http://www.Department0.University0.edu/AssistantProfessor1"
+      }
+    }
+  ]
+}
