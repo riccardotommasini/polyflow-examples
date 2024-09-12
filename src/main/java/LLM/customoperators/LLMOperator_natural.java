@@ -1,6 +1,6 @@
 package LLM.customoperators;
 
-import customdatatypes.ImageDescription_natural;
+import LLM.customdatatypes.ImageDescription_natural;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;

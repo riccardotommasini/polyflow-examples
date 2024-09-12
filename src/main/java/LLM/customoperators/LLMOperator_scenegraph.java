@@ -1,6 +1,6 @@
 package LLM.customoperators;
 
-import customdatatypes.ImageDescription_scenegraph;
+import LLM.customdatatypes.ImageDescription_scenegraph;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;

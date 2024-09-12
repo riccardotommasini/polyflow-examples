@@ -1,8 +1,8 @@
 package LLM;
 
-import customdatatypes.ImageDescription_scenegraph;
-import customoperators.CustomTumblingWindow;
-import customoperators.LLMOperator_scenegraph;
+import LLM.customdatatypes.ImageDescription_scenegraph;
+import LLM.customoperators.CustomTumblingWindow;
+import LLM.customoperators.LLMOperator_scenegraph;
 import org.streamreasoning.rsp4j.api.coordinators.ContinuousProgram;
 import org.streamreasoning.rsp4j.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.rsp4j.api.operators.r2s.RelationToStreamOperator;
@@ -20,8 +20,8 @@ import shared.coordinators.ContinuousProgramImpl;
 import shared.operatorsimpl.r2r.DAG.DAGImpl;
 import shared.querying.TaskImpl;
 import shared.sds.SDSDefault;
-import stream.ImageStream;
-import stream.ImageStreamGenerator;
+import LLM.stream.ImageStream;
+import LLM.stream.ImageStreamGenerator;
 
 import java.util.ArrayList;
 import java.util.Collections;
