@@ -1,6 +1,5 @@
 package qsms;
 
-import graph.jena.stream.JenaBindingStream;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;

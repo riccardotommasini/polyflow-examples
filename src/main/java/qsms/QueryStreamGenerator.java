@@ -17,23 +17,11 @@ public class QueryStreamGenerator {
 
     private static final String PREFIX = "http://test/";
     private static final Long TIMEOUT = 1000L;
-    private final String[] colors = new String[]{"Blue", "Green", "Red", "Yellow", "Black", "Grey", "White"};
     private final Map<String, DataStream<String>> activeStreams = new HashMap();
     private final AtomicBoolean isStreaming = new AtomicBoolean(false);
     private final Random randomGenerator = new Random(1336L);
-    private AtomicLong streamIndexCounter = new AtomicLong(0L);
-    private String prefixes;
-    private String[] fileNames = new String[]{"/activity.trig", "/location.trig", "/heart.trig", "/breathing.trig", "/oxygen.trig"};
-    private List<Scanner> scanners = new ArrayList();
 
     public QueryStreamGenerator() {
-        try {
-            for (int i = 0; i < this.fileNames.length; ++i) {
-                this.scanners.add(new Scanner(new File(graph.jena.stream.JenaStreamGenerator.class.getResource(this.fileNames[i]).getPath())));
-                this.prefixes = ((Scanner) this.scanners.get(i)).nextLine();
-            }
-        } catch (FileNotFoundException var2) {
-        }
 
     }
 
@@ -116,11 +104,6 @@ public class QueryStreamGenerator {
 //            }
 //        }
 
-    }
-
-    private String selectRandomColor() {
-        int randomIndex = this.randomGenerator.nextInt(this.colors.length);
-        return this.colors[randomIndex];
     }
 
     public void stopStreaming() {
