@@ -35,6 +35,7 @@
             <scope>compile</scope>
         </dependency>
 
+
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
