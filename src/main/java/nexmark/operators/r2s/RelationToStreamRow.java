@@ -1,4 +1,4 @@
-package nexmark.operators;
+package nexmark.operators.r2s;
 
 import nexmark.customdatatypes.TestTimestampedRow;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;

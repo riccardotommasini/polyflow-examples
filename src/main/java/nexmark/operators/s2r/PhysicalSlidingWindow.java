@@ -1,4 +1,4 @@
-package nexmark.operators;
+package nexmark.operators.s2r;
 
 import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.exceptions.OutOfOrderElementException;
@@ -9,38 +9,27 @@ import org.streamreasoning.polyflow.api.sds.timevarying.TimeVarying;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.api.secret.report.Report;
-import org.streamreasoning.polyflow.api.secret.tick.Ticker;
-import org.streamreasoning.polyflow.api.secret.tick.secret.TickerFactory;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeInstant;
 import org.streamreasoning.polyflow.base.sds.TimeVaryingObject;
 
-
 import java.util.List;
 
-public class SlidingWindow<I, W, R extends Iterable<?>> implements StreamToRelationOperator<I, W, R> {
+public class PhysicalSlidingWindow<I, W, R extends Iterable<?>> implements StreamToRelationOperator<I, W, R> {
 
     protected final Time time;
     protected final String name;
     protected final ContentFactory<I, W, R> cf;
     protected Report report;
-    private final long width;
-    private Window activeWindow;
     private Content<I, W, R> activeContent;
-    private long t0;
-    private long toi;
 
-    public SlidingWindow( Time time, String name, ContentFactory<I, W, R> cf, Report report, long width){
+    public PhysicalSlidingWindow(Time time, String name, ContentFactory<I, W, R> cf, Report report){
 
         this.time = time;
         this.name = name;
         this.cf = cf;
         this.report = report;
-        this.width = width;
-        this.t0 = time.getScope();
-        this.activeWindow = new WindowImpl(0, width);
         this.activeContent = cf.create();
-        this.toi = 0;
     }
 
     @Override
@@ -80,18 +69,8 @@ public class SlidingWindow<I, W, R extends Iterable<?>> implements StreamToRelat
 
     @Override
     public void compute(I i, long l) {
-        if(l < time.getAppTime()){
-            throw new OutOfOrderElementException("Out of order not supported");
-        }
-        if(l > activeWindow.getC()){
-            activeWindow = new WindowImpl(l-width, l);
-        }
         activeContent.add(i);
-        this.time.setAppTime(l);
-        if(report.report(activeWindow, activeContent, l, System.currentTimeMillis())){
-            time.addEvaluationTimeInstants(new TimeInstant(l));
-        }
-
+        time.addEvaluationTimeInstants(new TimeInstant(l));
     }
 
     @Override

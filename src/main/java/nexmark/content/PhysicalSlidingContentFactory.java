@@ -6,11 +6,11 @@ import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.base.contentimpl.EmptyContent;
 import tech.tablesaw.api.Table;
 
-public class SlidingContentFactory implements ContentFactory<TestTimestampedRow, TestTimestampedRow, Table> {
+public class PhysicalSlidingContentFactory implements ContentFactory<TestTimestampedRow, TestTimestampedRow, Table> {
 
     Table emptyContent;
     long windowSize;
-    public SlidingContentFactory(Table emptyContent, long windowSize){
+    public PhysicalSlidingContentFactory(Table emptyContent, long windowSize){
         this.emptyContent = emptyContent;
         this.windowSize = windowSize;
     }
@@ -21,6 +21,6 @@ public class SlidingContentFactory implements ContentFactory<TestTimestampedRow,
 
     @Override
     public Content<TestTimestampedRow, TestTimestampedRow, Table> create() {
-        return new SlidingContent(emptyContent, windowSize);
+        return new PhysicalSlidingContent(emptyContent, windowSize);
     }
 }

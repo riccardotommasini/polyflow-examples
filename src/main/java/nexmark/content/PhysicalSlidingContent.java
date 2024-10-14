@@ -1,20 +1,19 @@
 package nexmark.content;
 
 import nexmark.customdatatypes.TestTimestampedRow;
-import nexmark.customdatatypes.TimestampedRow;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import tech.tablesaw.api.Table;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class SlidingContent implements Content<TestTimestampedRow, TestTimestampedRow, Table> {
+public class PhysicalSlidingContent implements Content<TestTimestampedRow, TestTimestampedRow, Table> {
 
     Queue<TestTimestampedRow> content = new LinkedList<>();
     Table emptyContent;
     long windowSize;
 
-    public SlidingContent(Table emptyContent, long windowSize){
+    public PhysicalSlidingContent(Table emptyContent, long windowSize){
         this.emptyContent = emptyContent;
         this.windowSize = windowSize;
     }
@@ -26,7 +25,7 @@ public class SlidingContent implements Content<TestTimestampedRow, TestTimestamp
     @Override
     public void add(TestTimestampedRow timestampedRow) {
         content.offer(timestampedRow);
-        while(!content.isEmpty() && timestampedRow.getTimestamp() - windowSize >= content.peek().getTimestamp()){
+        while(!content.isEmpty() && content.size() > windowSize){
             content.poll();
         }
     }

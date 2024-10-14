@@ -50,10 +50,22 @@ public class StreamGenerator {
         if (!this.isStreaming.get()) {
             this.isStreaming.set(true);
             Runnable task = () -> {
+                long prev_ts = -1;
                 while (this.isStreaming.get() && s1.hasNext()) {
                     String tuple = s1.nextLine();
                     String[] valAndTs = tuple.split(",", 2);
                     long ts = Long.parseLong(valAndTs[0]);
+                    if(prev_ts == -1)
+                        prev_ts = ts;
+
+                    else if(ts-prev_ts > 0){
+                        try {
+                            Thread.sleep(ts - prev_ts);
+                        }catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        prev_ts = ts;
+                    }
                     int i = 0;
                     StringBuilder b = new StringBuilder();
                     tuple = valAndTs[1];

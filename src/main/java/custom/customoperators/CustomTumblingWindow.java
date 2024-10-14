@@ -116,7 +116,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
         if (time.getAppTime() > ts) {
             throw new OutOfOrderElementException("(" + arg + "," + ts + ")");
         }
-        System.out.println("Received element (" + arg + ") at time " + ts + " ms at window " + name);
+        //System.out.println("Received element (" + arg + ") at time " + ts + " ms at window " + name);
 
         //We received an element at time ts, advance the application time
         time.setAppTime(ts);
@@ -164,7 +164,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
     public void evict(long ts) {
         reported_window = null;
         reported_content = null;
-        if (active_window.getC() < ts) {
+        if (active_window != null && active_window.getC() < ts) {
             active_window = null;
             reported_content = null;
         }
