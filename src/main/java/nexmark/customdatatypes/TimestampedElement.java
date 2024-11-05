@@ -2,10 +2,10 @@ package nexmark.customdatatypes;
 
 import tech.tablesaw.api.Row;
 
-public interface TimestampedRow {
+public interface TimestampedElement<I> {
 
     long getTimestamp();
 
-    Row getRow();
+    I getElement();
 
 }

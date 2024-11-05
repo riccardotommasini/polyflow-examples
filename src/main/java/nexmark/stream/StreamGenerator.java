@@ -1,6 +1,7 @@
 package nexmark.stream;
 
 import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Tuple;
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamGenerator {
     private static final Long TIMEOUT = 1000l;
-    private final Map<String, DataStream<TestTimestampedRow>> activeStreams;
+    private final Map<String, DataStream<TimestampedElement<Table>>> activeStreams;
 
     private File f1 = new File(RowStreamGenerator.class.getResource("/events.txt").getPath());
     private Scanner s1;
@@ -30,7 +31,7 @@ public class StreamGenerator {
 
 
     public StreamGenerator() {
-        this.activeStreams = new HashMap<String, DataStream<TestTimestampedRow>>();
+        this.activeStreams = new HashMap<String, DataStream<TimestampedElement<Table>>>();
         this.isStreaming = new AtomicBoolean(false);
         try {
             s1 = new Scanner(f1);
@@ -38,9 +39,9 @@ public class StreamGenerator {
     }
 
 
-    public DataStream<TestTimestampedRow> getStream(String streamURI) {
+    public DataStream<TimestampedElement<Table>> getStream(String streamURI) {
         if (!activeStreams.containsKey(streamURI)) {
-            RowStream<TestTimestampedRow> stream = new RowStream<>(streamURI);
+            RowStream<TimestampedElement<Table>> stream = new RowStream<>(streamURI);
             activeStreams.put(streamURI, stream);
         }
         return activeStreams.get(streamURI);

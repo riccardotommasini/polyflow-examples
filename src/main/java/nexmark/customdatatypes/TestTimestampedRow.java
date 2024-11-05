@@ -5,7 +5,7 @@ import tech.tablesaw.api.Table;
 
 import java.util.Iterator;
 
-public class TestTimestampedRow{
+public class TestTimestampedRow implements TimestampedElement<Table>{
 
     private Table row;
     private long timestamp;
@@ -18,7 +18,7 @@ public class TestTimestampedRow{
     public long getTimestamp() {
         return this.timestamp;
     }
-    public Table getRow() {
+    public Table getElement() {
         return this.row;
     }
 

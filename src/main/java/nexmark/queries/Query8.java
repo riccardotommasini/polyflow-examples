@@ -2,7 +2,7 @@ package nexmark.queries;
 
 import custom.customoperators.CustomTumblingWindow;
 import nexmark.content.LogicalSlidingContentFactory;
-import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq8;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
@@ -50,9 +50,9 @@ public class Query8 {
 
         StreamGenerator generator = new StreamGenerator();
 
-        DataStream<TestTimestampedRow> auction = generator.getStream("Auction");
-        DataStream<TestTimestampedRow> bid = generator.getStream("Bid");
-        DataStream<TestTimestampedRow> person = generator.getStream("Person");
+        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
+        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
+        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
 
         // define output stream
         DataStream<Row> outStream = new RowStream("out");
@@ -64,16 +64,16 @@ public class Query8 {
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create("empty");
 
-        AccumulatorContentFactory<TestTimestampedRow, TestTimestampedRow, Table> contentFactory = new AccumulatorContentFactory<>(
+        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
                 (t->t),
-                (t->t.getRow().copy()),
+                (t->t.getElement().copy()),
                 ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
                 emptyContent);
 
-        ContinuousProgram<TestTimestampedRow, TestTimestampedRow, Table, Row> cp = new ContinuousProgramImpl<>();
+        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TestTimestampedRow, TestTimestampedRow, Table> auctionWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
                 new CustomTumblingWindow<>(
                         instance,
                         "auctionWindow",
@@ -81,7 +81,7 @@ public class Query8 {
                         report,
                         2000);
 
-        StreamToRelationOperator<TestTimestampedRow, TestTimestampedRow, Table> personWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> personWindow =
                 new CustomTumblingWindow<>(
                         instance,
                         "personWindow",
@@ -93,7 +93,7 @@ public class Query8 {
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TestTimestampedRow, TestTimestampedRow, Table, Row> task = new TaskImpl<>();
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
         task = task.addS2ROperator(auctionWindow, auction)
                 .addS2ROperator(personWindow, person)
                 .addR2ROperator(r2r)
@@ -103,7 +103,7 @@ public class Query8 {
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TestTimestampedRow>> inputStreams = new ArrayList<>();
+        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);

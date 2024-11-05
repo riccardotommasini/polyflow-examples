@@ -1,21 +1,28 @@
 package nexmark.content;
 
 import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import tech.tablesaw.api.Table;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class LogicalSlidingContent implements Content<TestTimestampedRow, TestTimestampedRow, Table> {
+public class LogicalSlidingContent<I, R> implements Content<TimestampedElement<I>, TimestampedElement<I>, R> {
 
-    Queue<TestTimestampedRow> content = new LinkedList<>();
-    Table emptyContent;
+    Queue<TimestampedElement<I>> content = new LinkedList<>();
+    R emptyContent;
     long windowSize;
+    Function<TimestampedElement<I>, R> f1;
+    BiFunction<R, R, R> sumR;
 
-    public LogicalSlidingContent(Table emptyContent, long windowSize){
+    public LogicalSlidingContent(R emptyContent, long windowSize, Function<TimestampedElement<I>, R> f1, BiFunction<R, R, R> sumR){
         this.emptyContent = emptyContent;
         this.windowSize = windowSize;
+        this.f1 = f1;
+        this.sumR = sumR;
     }
     @Override
     public int size() {
@@ -23,15 +30,15 @@ public class LogicalSlidingContent implements Content<TestTimestampedRow, TestTi
     }
 
     @Override
-    public void add(TestTimestampedRow timestampedRow) {
-        content.offer(timestampedRow);
-        while(!content.isEmpty() && timestampedRow.getTimestamp() - windowSize >= content.peek().getTimestamp()){
+    public void add(TimestampedElement<I> timestampedElement) {
+        content.offer(timestampedElement);
+        while(!content.isEmpty() && timestampedElement.getTimestamp() - windowSize >= content.peek().getTimestamp()){
             content.poll();
         }
     }
 
     @Override
-    public Table coalesce() {
-        return content.stream().map(x->x.getRow().copy()).reduce(emptyContent, (r1, r2) -> r1.isEmpty() ? r2 : r1.append(r2));
+    public R coalesce() {
+        return content.stream().map(x->f1.apply(x)).reduce(emptyContent, (r1, r2) -> sumR.apply(r1, r2));
     }
 }

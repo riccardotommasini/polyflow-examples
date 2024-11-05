@@ -2,6 +2,7 @@ package nexmark.queries;
 
 import nexmark.content.LogicalSlidingContentFactory;
 import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq5;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
@@ -50,9 +51,9 @@ public class Query5 {
 
         StreamGenerator generator = new StreamGenerator();
 
-        DataStream<TestTimestampedRow> auction = generator.getStream("Auction");
-        DataStream<TestTimestampedRow> bid = generator.getStream("Bid");
-        DataStream<TestTimestampedRow> person = generator.getStream("Person");
+        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
+        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
+        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
 
         // define output stream
         DataStream<Row> outStream = new RowStream("out");
@@ -64,12 +65,18 @@ public class Query5 {
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
         //The sliding factor should be the same as the window size
-        LogicalSlidingContentFactory contentFactory = new LogicalSlidingContentFactory(emptyContent, 1000);
+        LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
+                emptyContent,
+                1000,
+                t->t.getElement().copy(),
+                (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
 
-        ContinuousProgram<TestTimestampedRow, TestTimestampedRow, Table, Row> cp = new ContinuousProgramImpl<>();
+        );
+
+        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TestTimestampedRow, TestTimestampedRow, Table> bidWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
                 new LogicalSlidingWindow<>(
                         instance,
                         "bidWindow",
@@ -82,7 +89,7 @@ public class Query5 {
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TestTimestampedRow, TestTimestampedRow, Table, Row> task = new TaskImpl<>();
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
@@ -92,7 +99,7 @@ public class Query5 {
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TestTimestampedRow>> inputStreams = new ArrayList<>();
+        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);

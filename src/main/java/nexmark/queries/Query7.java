@@ -3,6 +3,7 @@ package nexmark.queries;
 import custom.customoperators.CustomTumblingWindow;
 import nexmark.content.LogicalSlidingContentFactory;
 import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq7;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
@@ -54,9 +55,9 @@ public class Query7 {
 
         StreamGenerator generator = new StreamGenerator();
 
-        DataStream<TestTimestampedRow> auction = generator.getStream("Auction");
-        DataStream<TestTimestampedRow> bid = generator.getStream("Bid");
-        DataStream<TestTimestampedRow> person = generator.getStream("Person");
+        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
+        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
+        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
 
         // define output stream
         DataStream<Row> outStream = new RowStream("out");
@@ -68,25 +69,18 @@ public class Query7 {
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        AccumulatorContentFactory<TestTimestampedRow, TestTimestampedRow, Table> contentFactory = new AccumulatorContentFactory<>(
+        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
                 (t->t),
-                (t->t.getRow().copy()),
+                (t->t.getElement().copy()),
                 ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
                 emptyContent);
 
-        ContinuousProgram<TestTimestampedRow, TestTimestampedRow, Table, Row> cp = new ContinuousProgramImpl<>();
+        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TestTimestampedRow, TestTimestampedRow, Table> auctionWindow =
-                new LogicalSlidingWindow<>(
-                        instance,
-                        "auctionWindow",
-                        contentFactory,
-                        report,
-                        500);
 
         //only interested in the bidWindow, which is a tumbling window of size 10 minutes
-        StreamToRelationOperator<TestTimestampedRow, TestTimestampedRow, Table> bidWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
                 new CustomTumblingWindow<>(
                         instance,
                         "bidWindow",
@@ -94,12 +88,11 @@ public class Query7 {
                         report,
                         500);
 
-
         RelationToRelationOperator<Table> r2r = new R2Rq7(List.of("bidWindow"), "res");
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TestTimestampedRow, TestTimestampedRow, Table, Row> task = new TaskImpl<>();
-        task = task.addS2ROperator(auctionWindow, auction)
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
+        task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
@@ -108,7 +101,7 @@ public class Query7 {
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TestTimestampedRow>> inputStreams = new ArrayList<>();
+        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);

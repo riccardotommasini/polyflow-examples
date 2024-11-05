@@ -1,21 +1,29 @@
 package nexmark.content;
 
 import nexmark.customdatatypes.TestTimestampedRow;
+import nexmark.customdatatypes.TimestampedElement;
 import org.streamreasoning.polyflow.api.secret.content.Content;
+import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import tech.tablesaw.api.Table;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class PhysicalSlidingContent implements Content<TestTimestampedRow, TestTimestampedRow, Table> {
+public class PhysicalSlidingContent<I, R> implements Content<TimestampedElement<I>, TimestampedElement<I>, R> {
 
-    Queue<TestTimestampedRow> content = new LinkedList<>();
-    Table emptyContent;
+    Queue<TimestampedElement<I>> content = new LinkedList<>();
+    R emptyContent;
     long windowSize;
+    Function<TimestampedElement<I>, R> f1;
+    BiFunction<R, R, R> sumR;
 
-    public PhysicalSlidingContent(Table emptyContent, long windowSize){
+    public PhysicalSlidingContent(R emptyContent, long windowSize, Function<TimestampedElement<I>, R> f1, BiFunction<R, R, R> sumR){
         this.emptyContent = emptyContent;
         this.windowSize = windowSize;
+        this.f1 = f1;
+        this.sumR = sumR;
     }
     @Override
     public int size() {
@@ -23,15 +31,15 @@ public class PhysicalSlidingContent implements Content<TestTimestampedRow, TestT
     }
 
     @Override
-    public void add(TestTimestampedRow timestampedRow) {
-        content.offer(timestampedRow);
-        while(!content.isEmpty() && content.size() > windowSize){
+    public void add(TimestampedElement<I> timestampedElement) {
+        content.offer(timestampedElement);
+        while(!content.isEmpty() && content.size()>windowSize){
             content.poll();
         }
     }
 
     @Override
-    public Table coalesce() {
-        return content.stream().map(x->x.getRow()).reduce(emptyContent, (r1, r2) -> r1.isEmpty() ? r2 : r1.append(r2));
+    public R coalesce() {
+        return content.stream().map(x->f1.apply(x)).reduce(emptyContent, (r1, r2) -> sumR.apply(r1, r2));
     }
 }
