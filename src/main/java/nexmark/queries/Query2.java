@@ -78,8 +78,7 @@ public class Query2 {
                         instance,
                         "bidWindow",
                         contentFactory,
-                        report,
-                        1000);
+                        report);
 
 
         RelationToRelationOperator<Table> r2r = new R2Rq2(List.of("bidWindow"), "res");

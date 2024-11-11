@@ -20,23 +20,17 @@ public class UnboundedWindow<I, W, R extends Iterable<?>> implements StreamToRel
     protected final String name;
     protected final ContentFactory<I, W, R> cf;
     protected Report report;
-    private final long width;
     private Window activeWindow;
     private Content<I, W, R> activeContent;
-    private long t0;
-    private long toi;
 
-    public UnboundedWindow(Time time, String name, ContentFactory<I, W, R> cf, Report report, long width){
+    public UnboundedWindow(Time time, String name, ContentFactory<I, W, R> cf, Report report){
 
         this.time = time;
         this.name = name;
         this.cf = cf;
         this.report = report;
-        this.width = width;
-        this.t0 = time.getScope();
         this.activeWindow = new WindowImpl(0, -1);
         this.activeContent = cf.create();
-        this.toi = 0;
     }
 
     @Override
