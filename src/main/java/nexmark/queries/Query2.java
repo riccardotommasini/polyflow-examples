@@ -1,0 +1,116 @@
+package nexmark.queries;
+
+
+import nexmark.customdatatypes.TimestampedElement;
+import nexmark.operators.r2r.R2Rq1;
+import nexmark.operators.r2r.R2Rq2;
+import nexmark.operators.r2s.RelationToStreamRow;
+import nexmark.operators.s2r.EvictOnReportWindow;
+import nexmark.report.Periodic;
+import nexmark.stream.StreamGenerator;
+import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
+import org.streamreasoning.polyflow.api.processing.Task;
+import org.streamreasoning.polyflow.api.secret.report.Report;
+import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
+import org.streamreasoning.polyflow.api.secret.time.Time;
+import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
+import org.streamreasoning.polyflow.api.stream.data.DataStream;
+import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
+import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
+import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
+import org.streamreasoning.polyflow.base.processing.TaskImpl;
+import relational.sds.SDSjtablesaw;
+import relational.stream.RowStream;
+import tech.tablesaw.api.Row;
+import tech.tablesaw.api.Table;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/*
+Query 2 selects all bids on a set of five items and
+tests the stream system’s selection operation.
+
+SELECT itemid, price
+FROM bid
+WHERE itemid = 1007 OR
+itemid = 1020 OR
+itemid = 2001 OR
+itemid = 2019 OR
+itemid = 1087;
+ */
+public class Query2 {
+
+    public static void main(String[] args) throws InterruptedException {
+
+        StreamGenerator generator = new StreamGenerator();
+
+        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
+        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
+        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+
+        // define output stream
+        DataStream<Row> outStream = new RowStream("out");
+
+        // Engine properties
+        Report report = new ReportImpl();
+        report.add(new Periodic(5000)); //TODO: review output strategy
+
+        Time instance = new TimeImpl(0);
+        Table emptyContent = Table.create();
+
+        //The sliding factor should be the same as the window size
+        AccumulatorContentFactory<TimestampedElement<Table>,TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
+                (t->t),
+                (t->t.getElement().copy()),
+                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
+                emptyContent
+        );
+
+        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+
+
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+                new EvictOnReportWindow<>(
+                        instance,
+                        "bidWindow",
+                        contentFactory,
+                        report);
+
+
+        RelationToRelationOperator<Table> r2r = new R2Rq2(List.of("bidWindow"), "res");
+
+        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
+
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
+        task = task
+                .addS2ROperator(bidWindow, bid)
+                .addR2ROperator(r2r)
+                .addR2SOperator(r2sOp)
+                .addSDS(new SDSjtablesaw())
+                .addDAG(new DAGImpl<>())
+                .addTime(instance);
+        task.initialize();
+
+        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        inputStreams.add(bid);
+        inputStreams.add(auction);
+        inputStreams.add(person);
+
+
+        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        outputStreams.add(outStream);
+
+        cp.buildTask(task, inputStreams, outputStreams);
+
+        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+
+        generator.startStreaming();
+
+    }
+}
+
+
