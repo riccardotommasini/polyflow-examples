@@ -51,11 +51,10 @@ public class Query4 {
         AND I.id = CA.itemid
         GROUP BY C.id;
 
-Assumption: no bids arrive for a closed auction
+Assumption: no bids arrive for a closed auction. We don not use the closing price of an auction, but the closing price
+up until that point (basically, every report gives you a snapshot of the possible closing price if the auction were to end in that isntant)
         */
-//USARE KEY VALUE WINDOW PER LE BID CON UN MAXCONTENT CHE SI SALVA SEMPRE LA BID MASSIMA. REPORTARE QUANDO
-    //IL MASSIMO CAMBIA (USARE UNO STATEFUL CONTENT PER DIRE ALLA WINDOW CHE BISOGNA REPORTARE).
-    //EVICTARE LE AUCTION QUANDO SCADONO
+
 
     public static void main(String[] args) throws InterruptedException {
 
