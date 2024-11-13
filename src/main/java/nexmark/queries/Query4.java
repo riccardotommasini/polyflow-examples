@@ -1,7 +1,9 @@
 package nexmark.queries;
 
 
+import nexmark.content.MaxContentFactory;
 import nexmark.customdatatypes.TimestampedElement;
+import nexmark.operators.r2r.R2Rq4;
 import nexmark.operators.r2r.q3.R2Rq3_auction;
 import nexmark.operators.r2r.q3.R2Rq3_join;
 import nexmark.operators.r2r.q3.R2Rq3_person;
@@ -11,6 +13,7 @@ import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import org.javatuples.Tuple;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -22,6 +25,7 @@ import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
+import org.streamreasoning.polyflow.base.contentimpl.factories.ContainerContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
@@ -47,6 +51,7 @@ public class Query4 {
         AND I.id = CA.itemid
         GROUP BY C.id;
 
+Assumption: no bids arrive for a closed auction
         */
 //USARE KEY VALUE WINDOW PER LE BID CON UN MAXCONTENT CHE SI SALVA SEMPRE LA BID MASSIMA. REPORTARE QUANDO
     //IL MASSIMO CAMBIA (USARE UNO STATEFUL CONTENT PER DIRE ALLA WINDOW CHE BISOGNA REPORTARE).
@@ -81,35 +86,60 @@ public class Query4 {
                 emptyContent
         );
 
+        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
+                (t->t),
+                (t->t.getElement().copy()),
+                (t1, t2)->{
+                    if(t1 == null)
+                        return -1;
+                    Long currMax, element;
+                    currMax = t1.getElement().longColumn("price").get(0);
+                    element = t2.getElement().longColumn("price").get(0);
+                    if(currMax < element){
+                        return -1;
+                    }
+                    else if(currMax > element){
+                        return 1;
+                    }
+                    else return 0;
+                },
+                emptyContent
+        );
+
+        ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
+                i-> i.getElement().longColumn("auction").get(0),
+                w->null,
+                r->null,
+                (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
+                emptyContent,
+                maxContentFactory);
+
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
-                new EvictOnReportWindow<>(
+                new UnboundedWindow<>(
                         instance,
                         "auctionWindow",
                         accumulateFactory,
-                        report);
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> peopleWindow =
-                new UnboundedWindow<>(
-                        instance,
-                        "peopleWindow",
-                        accumulateFactory,
                         neverReport);
 
-        RelationToRelationOperator<Table> r2r_people = new R2Rq3_person(List.of("peopleWindow"), "filteredPeople");
-        RelationToRelationOperator<Table> r2r_auction = new R2Rq3_auction(List.of("auctionWindow"), "filteredAuction");
-        RelationToRelationOperator<Table> r2r_join = new R2Rq3_join(List.of("filteredPeople", "filteredAuction"), "res");
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+                new UnboundedWindow<>(
+                        instance,
+                        "bidWindow",
+                        containerContentFactory,
+                        report);
+
+        RelationToRelationOperator<Table> r2r = new R2Rq4(List.of("auctionWindow", "bidWindow"), "res");
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>("1");
         task = task
-                .addS2ROperator(peopleWindow, person)
+                .addS2ROperator(bidWindow, bid)
                 .addS2ROperator(auctionWindow, auction)
-                .addR2ROperator(r2r_people)
-                .addR2ROperator(r2r_auction)
-                .addR2ROperator(r2r_join)
+                .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
                 .addSDS(new SDSjtablesaw())
                 .addDAG(new DAGImpl<>())

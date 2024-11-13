@@ -82,7 +82,7 @@ public class Query1 {
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>();
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)

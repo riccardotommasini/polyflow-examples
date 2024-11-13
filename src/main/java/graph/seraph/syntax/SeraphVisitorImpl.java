@@ -175,7 +175,7 @@ public class SeraphVisitorImpl extends SeraphBaseVisitor<ContinuousQuery> {
 
         HoppingWindowOpImpl<PGraph, PGraph, PGraphOrResult> w1 = new HoppingWindowOpImpl<>(tick, instance, "w1", accumulatorContentFactory, report, range.toMillis(), period.toMillis());
 
-        Task<PGraph, PGraph, PGraphOrResult, Result> task = new TaskImpl<>();
+        Task<PGraph, PGraph, PGraphOrResult, Result> task = new TaskImpl<>("1");
 
         RelationToRelationOperator<PGraphOrResult> r2rOp1 = new FullQueryUnaryNeo(query, Collections.singletonList(w1.getName()), "partial_1");
 

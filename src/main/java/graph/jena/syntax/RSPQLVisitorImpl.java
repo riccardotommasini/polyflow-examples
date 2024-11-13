@@ -55,7 +55,7 @@ public class RSPQLVisitorImpl extends RSPQLBaseVisitor<Task<Graph, Graph, JenaGr
     private List<String> windows = new ArrayList<>();
 
     public RSPQLVisitorImpl() {
-        this.task = new TaskImpl<>();
+        this.task = new TaskImpl<>("1");
         report.add(new OnWindowClose());
         this.task.addDAG(new DAGImpl<>()).addSDS(new SDSJena()).addTime(instance);
     }
