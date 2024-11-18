@@ -70,7 +70,6 @@ public class Query3 {
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
-        //The sliding factor should be the same as the window size
 
         AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> accumulateFactory = new AccumulatorContentFactory<>(
                 (t->t),

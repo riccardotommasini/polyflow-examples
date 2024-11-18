@@ -31,16 +31,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
-Query 2 selects all bids on a set of five items and
-tests the stream system’s selection operation.
+    Query 2 selects all bids on a set of five items and
+    tests the stream system’s selection operation.
 
-SELECT itemid, price
-FROM bid
-WHERE itemid = 1007 OR
-itemid = 1020 OR
-itemid = 2001 OR
-itemid = 2019 OR
-itemid = 1087;
+    SELECT itemid, price
+    FROM bid
+    WHERE itemid = 1007 OR
+    itemid = 1020 OR
+    itemid = 2001 OR
+    itemid = 2019 OR
+    itemid = 1087;
  */
 public class Query2 {
 

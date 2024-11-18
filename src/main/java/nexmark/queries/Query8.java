@@ -5,7 +5,10 @@ import nexmark.content.LogicalSlidingContentFactory;
 import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq8;
 import nexmark.operators.r2s.RelationToStreamRow;
+import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
+import nexmark.report.Always;
+import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
@@ -59,7 +62,10 @@ public class Query8 {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new OnWindowClose());
+        report.add(new Always());
+
+        Report report2 = new ReportImpl();
+        report.add( new Never());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create("empty");
@@ -70,23 +76,30 @@ public class Query8 {
                 ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
                 emptyContent);
 
+        LogicalSlidingContentFactory<Table, Table> slidingContentFactory = new LogicalSlidingContentFactory<>(
+                emptyContent,
+                2000,
+                t->t.getElement().copy(),
+                (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
+
+        );
+
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
-                new CustomTumblingWindow<>(
+                new EvictOnReportWindow<>(
                         instance,
                         "auctionWindow",
                         contentFactory,
-                        report,
-                        2000);
+                        report);
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> personWindow =
-                new CustomTumblingWindow<>(
+                new LogicalSlidingWindow<>(
                         instance,
                         "personWindow",
-                        contentFactory,
-                        report,
+                        slidingContentFactory,
+                        report2,
                         2000);
 
         RelationToRelationOperator<Table> r2r = new R2Rq8(List.of("personWindow", "auctionWindow"), "res");

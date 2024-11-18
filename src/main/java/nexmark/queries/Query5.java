@@ -64,7 +64,6 @@ public class Query5 {
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
-        //The sliding factor should be the same as the window size
         LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
                 emptyContent,
                 1000,
