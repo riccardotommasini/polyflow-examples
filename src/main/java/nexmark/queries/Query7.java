@@ -9,6 +9,7 @@ import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -33,7 +34,7 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query7 {
+public class Query7 implements Query {
 
         /*
         Query 7 monitors the highest price items currently
@@ -51,7 +52,11 @@ public class Query7 {
         10 MINUTES PRECEDING]);
         */
 
-    public static void main(String[] args) throws InterruptedException {
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -116,6 +121,24 @@ public class Query7 {
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 
 }

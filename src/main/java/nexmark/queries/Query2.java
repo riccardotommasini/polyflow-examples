@@ -8,6 +8,7 @@ import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -42,9 +43,11 @@ import java.util.List;
     itemid = 2019 OR
     itemid = 1087;
  */
-public class Query2 {
-
-    public static void main(String[] args) throws InterruptedException {
+public class Query2 implements Query {
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -57,7 +60,7 @@ public class Query2 {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(5000)); //TODO: review output strategy
+        report.add(new Periodic(1)); //TODO: review output strategy
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
@@ -106,10 +109,28 @@ public class Query2 {
 
         cp.buildTask(task, inputStreams, outputStreams);
 
-        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        outStream.addConsumer((out, el, ts) -> {});
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 }
 

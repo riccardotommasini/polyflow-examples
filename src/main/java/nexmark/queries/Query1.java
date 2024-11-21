@@ -11,6 +11,7 @@ import nexmark.operators.s2r.LogicalSlidingWindow;
 import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -39,9 +40,12 @@ of the bids from U.S. dollars to Euros.
 SELECT itemid, DOLTOEUR(price), bidderId, bidTime
 FROM bid;
  */
-public class Query1 {
+public class Query1 implements Query {
 
-    public static void main(String[] args) throws InterruptedException {
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -54,7 +58,7 @@ public class Query1 {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(5000)); //TODO: review output strategy
+        report.add(new Periodic(1)); //TODO: review output strategy
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
@@ -103,10 +107,29 @@ public class Query1 {
 
         cp.buildTask(task, inputStreams, outputStreams);
 
-        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        outStream.addConsumer((out, el, ts) -> {});
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 }
 

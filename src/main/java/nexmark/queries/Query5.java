@@ -8,6 +8,7 @@ import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -29,7 +30,7 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query5 {
+public class Query5 implements Query {
 
         /*
         This query selects the item with the most bids in
@@ -46,8 +47,11 @@ public class Query5 {
         RANGE 60 MINUTES PRECEDING]
         */
 
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
 
-    public static void main(String[] args) throws InterruptedException {
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -113,6 +117,24 @@ public class Query5 {
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 
 }

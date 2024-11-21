@@ -11,6 +11,7 @@ import nexmark.report.Always;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -34,7 +35,7 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query8 {
+public class Query8 implements Query {
 
        /*
         This query finds people who put something up for
@@ -49,7 +50,11 @@ public class Query8 {
         WHERE person.id = open auction.sellerId;
        */
 
-    public static void main(String[] args) throws InterruptedException {
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -131,6 +136,24 @@ public class Query8 {
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 
 }

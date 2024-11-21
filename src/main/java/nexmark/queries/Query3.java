@@ -14,6 +14,7 @@ import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -36,7 +37,7 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query3 {
+public class Query3 implements Query {
 
       /*
         SELECT person.name, person.city,
@@ -49,8 +50,10 @@ public class Query3 {
 
         */
 
-
-    public static void main(String[] args) throws InterruptedException {
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+    public void execute(){
 
         StreamGenerator generator = new StreamGenerator();
 
@@ -128,6 +131,24 @@ public class Query3 {
 
         generator.startStreaming();
 
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
+
+    }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
     }
 
 

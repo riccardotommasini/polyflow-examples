@@ -22,12 +22,15 @@ import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamGenerator {
-    private static final Long TIMEOUT = 1000l;
     private final Map<String, DataStream<TimestampedElement<Table>>> activeStreams;
 
     private File f1 = new File(RowStreamGenerator.class.getResource("/events.txt").getPath());
     private Scanner s1;
     private final AtomicBoolean isStreaming;
+    public double numEvents = 10000000;
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
 
 
     public StreamGenerator() {
@@ -48,49 +51,47 @@ public class StreamGenerator {
     }
 
     public void startStreaming() {
+
         if (!this.isStreaming.get()) {
             this.isStreaming.set(true);
-            Runnable task = () -> {
-                long prev_ts = -1;
-                while (this.isStreaming.get() && s1.hasNext()) {
-                    String tuple = s1.nextLine();
-                    String[] valAndTs = tuple.split(",", 2);
-                    long ts = Long.parseLong(valAndTs[0]);
-                    if(prev_ts == -1)
-                        prev_ts = ts;
+            long start = System.currentTimeMillis();
+            timeSpentParsing = 0;
+            totalTime = 0;
+            long prev_ts = -1;
+            while (this.isStreaming.get() && s1.hasNext()) {
+                long parseStart = System.currentTimeMillis();
+                String tuple = s1.nextLine();
+                String[] valAndTs = tuple.split(",", 2);
+                long ts = Long.parseLong(valAndTs[0]);
+                if(prev_ts == -1)
+                    prev_ts = ts;
 
-                    else if(ts-prev_ts > 0){
-                        try {
-                            Thread.sleep(ts - prev_ts);
-                        }catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        prev_ts = ts;
-                    }
-                    int i = 0;
-                    StringBuilder b = new StringBuilder();
-                    tuple = valAndTs[1];
-                    /*----Phase 1: parse the type of tuple (Auction, Person or Bid)----*/
-                    while(tuple.charAt(i)!= '{'){
-                        b.append(tuple.charAt(i));
-                        i++;
-                    }
-                    String name = b.toString();
-                    tuple = tuple.substring(i+1, tuple.length()-1);
-                    activeStreams.get(name).put(new TestTimestampedRow(parse(tuple, name), ts), ts);
-                    /*try {
-                        Thread.sleep(TIMEOUT);
-                    } catch (InterruptedException e) {
+                else if(ts-prev_ts > 0){
+                    try {
+                        //Simulate the delay between events (might remove for throughput measurement)
+                        Thread.sleep(ts - prev_ts);
+                    }catch (InterruptedException e) {
                         e.printStackTrace();
-                    }*/
+                    }
+                    prev_ts = ts;
                 }
-                stopStreaming();
+                int i = 0;
+                StringBuilder b = new StringBuilder();
+                tuple = valAndTs[1];
+                /*----Phase 1: parse the type of tuple (Auction, Person or Bid)----*/
+                while(tuple.charAt(i)!= '{'){
+                    b.append(tuple.charAt(i));
+                    i++;
+                }
+                String name = b.toString();
+                tuple = tuple.substring(i+1, tuple.length()-1);
+                timeSpentParsing+=System.currentTimeMillis()-parseStart;
+                activeStreams.get(name).put(new TestTimestampedRow(parse(tuple, name), ts), ts);
+                }
+            stopStreaming();
+            totalTime = System.currentTimeMillis()-start;
+            throughput = numEvents/totalTime;
 
-            };
-
-
-            Thread thread = new Thread(task);
-            thread.start();
         }
     }
 

@@ -14,6 +14,7 @@ import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -37,7 +38,7 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query6 {
+public class Query6 implements Query {
 
         /*
         Query 6 calculates, for each seller, the average sell-
@@ -54,111 +55,133 @@ Assumption: no bids arrive for a closed auction. We don not use the closing pric
 up until that point (basically, every report gives you a snapshot of the possible closing price if the auction were to end in that isntant)
 
         */
-        public static void main(String[] args) throws InterruptedException {
 
-            StreamGenerator generator = new StreamGenerator();
+    public double throughput;
+    public double totalTime;
+    public double timeSpentParsing;
+    public void execute(){
 
-            DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
-            DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
-            DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+        StreamGenerator generator = new StreamGenerator();
 
-            // define output stream
-            DataStream<Row> outStream = new RowStream("out");
+        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
+        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
+        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
 
-            // Engine properties
-            Report report = new ReportImpl();
-            report.add(new Periodic(500));
+        // define output stream
+        DataStream<Row> outStream = new RowStream("out");
 
-            Report neverReport = new ReportImpl();
-            neverReport.add(new Never());
+        // Engine properties
+        Report report = new ReportImpl();
+        report.add(new Periodic(500));
 
-            Time instance = new TimeImpl(0);
-            Table emptyContent = Table.create();
+        Report neverReport = new ReportImpl();
+        neverReport.add(new Never());
 
-
-            PhysicalSlidingContentFactory<Table, Table> slidingFactory = new PhysicalSlidingContentFactory<>(
-                    emptyContent,
-                    10,
-                    (t->t.getElement().copy()),
-                    ((t1, t2)->t1.isEmpty()?t2:t1.append(t2))
-            );
-
-            MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
-                    (t->t),
-                    (t->t.getElement().copy()),
-                    (t1, t2)->{
-                        if(t1 == null)
-                            return -1;
-                        Long currMax, element;
-                        currMax = t1.getElement().longColumn("price").get(0);
-                        element = t2.getElement().longColumn("price").get(0);
-                        if(currMax < element){
-                            return -1;
-                        }
-                        else if(currMax > element){
-                            return 1;
-                        }
-                        else return 0;
-                    },
-                    emptyContent
-            );
-
-            ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
-                    i-> i.getElement().longColumn("auction").get(0),
-                    w->null,
-                    r->null,
-                    (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
-                    emptyContent,
-                    maxContentFactory);
-
-            ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
-
-            StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
-                    new PhysicalSlidingWindow<>(
-                            instance,
-                            "auctionWindow",
-                            slidingFactory,
-                            neverReport
-                            );
-
-            StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
-                    new UnboundedWindow<>(
-                            instance,
-                            "bidWindow",
-                            containerContentFactory,
-                            report);
-
-            RelationToRelationOperator<Table> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
-
-            RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
-
-            Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>("1");
-            task = task
-                    .addS2ROperator(bidWindow, bid)
-                    .addS2ROperator(auctionWindow, auction)
-                    .addR2ROperator(r2r)
-                    .addR2SOperator(r2sOp)
-                    .addSDS(new SDSjtablesaw())
-                    .addDAG(new DAGImpl<>())
-                    .addTime(instance);
-            task.initialize();
-
-            List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
-            inputStreams.add(bid);
-            inputStreams.add(auction);
-            inputStreams.add(person);
+        Time instance = new TimeImpl(0);
+        Table emptyContent = Table.create();
 
 
-            List<DataStream<Row>> outputStreams = new ArrayList<>();
-            outputStreams.add(outStream);
+        PhysicalSlidingContentFactory<Table, Table> slidingFactory = new PhysicalSlidingContentFactory<>(
+                emptyContent,
+                10,
+                (t->t.getElement().copy()),
+                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2))
+        );
 
-            cp.buildTask(task, inputStreams, outputStreams);
+        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
+                (t->t),
+                (t->t.getElement().copy()),
+                (t1, t2)->{
+                    if(t1 == null)
+                        return -1;
+                    Long currMax, element;
+                    currMax = t1.getElement().longColumn("price").get(0);
+                    element = t2.getElement().longColumn("price").get(0);
+                    if(currMax < element){
+                        return -1;
+                    }
+                    else if(currMax > element){
+                        return 1;
+                    }
+                    else return 0;
+                },
+                emptyContent
+        );
 
-            outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
+                i-> i.getElement().longColumn("auction").get(0),
+                w->null,
+                r->null,
+                (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
+                emptyContent,
+                maxContentFactory);
 
-            generator.startStreaming();
+        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
+                new PhysicalSlidingWindow<>(
+                        instance,
+                        "auctionWindow",
+                        slidingFactory,
+                        neverReport
+                        );
+
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+                new UnboundedWindow<>(
+                        instance,
+                        "bidWindow",
+                        containerContentFactory,
+                        report);
+
+        RelationToRelationOperator<Table> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
+
+        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
+
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>("1");
+        task = task
+                .addS2ROperator(bidWindow, bid)
+                .addS2ROperator(auctionWindow, auction)
+                .addR2ROperator(r2r)
+                .addR2SOperator(r2sOp)
+                .addSDS(new SDSjtablesaw())
+                .addDAG(new DAGImpl<>())
+                .addTime(instance);
+        task.initialize();
+
+        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        inputStreams.add(bid);
+        inputStreams.add(auction);
+        inputStreams.add(person);
+
+
+        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        outputStreams.add(outStream);
+
+        cp.buildTask(task, inputStreams, outputStreams);
+
+        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+
+        generator.startStreaming();
+
+        this.totalTime = generator.totalTime;
+        this.throughput = generator.throughput;
+        this.timeSpentParsing = generator.timeSpentParsing;
 
         }
+    @Override
+    public double getTotalTime() {
+        return totalTime;
+    }
+
+    @Override
+    public double getThroughput() {
+        return throughput;
+    }
+
+    @Override
+    public double getTimeSpentParsing() {
+        return timeSpentParsing;
+    }
 
 
 }
