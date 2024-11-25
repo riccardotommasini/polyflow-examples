@@ -72,7 +72,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(500));
+        report.add(new Periodic(1));
 
         Report neverReport = new ReportImpl();
         neverReport.add(new Never());
@@ -159,7 +159,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
 
         cp.buildTask(task, inputStreams, outputStreams);
 
-        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        outStream.addConsumer((out, el, ts) -> {});
 
         generator.startStreaming();
 

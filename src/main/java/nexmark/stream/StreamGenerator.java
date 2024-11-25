@@ -27,7 +27,7 @@ public class StreamGenerator {
     private File f1 = new File(RowStreamGenerator.class.getResource("/events.txt").getPath());
     private Scanner s1;
     private final AtomicBoolean isStreaming;
-    public double numEvents = 10000000;
+    public double numEvents = 1000000;
     public double throughput;
     public double totalTime;
     public double timeSpentParsing;
@@ -63,7 +63,7 @@ public class StreamGenerator {
                 String tuple = s1.nextLine();
                 String[] valAndTs = tuple.split(",", 2);
                 long ts = Long.parseLong(valAndTs[0]);
-                if(prev_ts == -1)
+                /*if(prev_ts == -1)
                     prev_ts = ts;
 
                 else if(ts-prev_ts > 0){
@@ -74,7 +74,8 @@ public class StreamGenerator {
                         e.printStackTrace();
                     }
                     prev_ts = ts;
-                }
+                }*/
+                prev_ts = ts;
                 int i = 0;
                 StringBuilder b = new StringBuilder();
                 tuple = valAndTs[1];

@@ -64,7 +64,7 @@ public class Query5 implements Query {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(200));
+        report.add(new Periodic(1));
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
@@ -113,7 +113,7 @@ public class Query5 implements Query {
 
         cp.buildTask(task, inputStreams, outputStreams);
 
-        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        outStream.addConsumer((out, el, ts) -> {});
 
         generator.startStreaming();
 

@@ -117,7 +117,7 @@ public class Query7 implements Query {
 
         cp.buildTask(task, inputStreams, outputStreams);
 
-        outStream.addConsumer((out, el, ts) -> System.out.println(el + " @ " + ts));
+        outStream.addConsumer((out, el, ts) -> {});
 
         generator.startStreaming();
 
