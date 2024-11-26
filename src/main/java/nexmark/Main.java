@@ -18,15 +18,14 @@ public class Main {
         List<Double> totalTime = new ArrayList<>();
         List<Double> spentParsing = new ArrayList<>();
 
-        queries.add(new Query1());
+        /*queries.add(new Query1());
         queries.add(new Query2());
-        queries.add(new Query3());
+        queries.add(new Query3());*/
         queries.add(new Query4());
-        queries.add(new Query5());
+       /*queries.add(new Query5());
         queries.add(new Query6());
         queries.add(new Query7());
-        queries.add(new Query8());
-
+        queries.add(new Query8());*/
 
         for(Query q : queries){
             double sum_throughput=0;

@@ -89,9 +89,9 @@ public class Query7 implements Query {
                 new CustomTumblingWindow<>(
                         instance,
                         "bidWindow",
-                        contentFactory,
+                        contentFactory, //TODO: usare semplicemente una max factory e tenere solo la bid più alta
                         report,
-                        500);
+                        100); // width of 1000 is too much given the timestamps generated in our file
 
         RelationToRelationOperator<Table> r2r = new R2Rq7(List.of("bidWindow"), "res");
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();

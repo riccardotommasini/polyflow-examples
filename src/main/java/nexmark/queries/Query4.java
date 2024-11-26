@@ -1,6 +1,7 @@
 package nexmark.queries;
 
 
+import nexmark.content.ExpiredAuctionContentFactory;
 import nexmark.content.MaxContentFactory;
 import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq4;
@@ -52,8 +53,7 @@ public class Query4 implements Query {
         AND I.id = CA.itemid
         GROUP BY C.id;
 
-Assumption: no bids arrive for a closed auction. We don not use the closing price of an auction, but the closing price
-up until that point (basically, every report gives you a snapshot of the possible closing price if the auction were to end in that isntant)
+        Assumption: no bids arrive for a closed auction.
         */
 
     public double throughput;
@@ -81,11 +81,10 @@ up until that point (basically, every report gives you a snapshot of the possibl
         Table emptyContent = Table.create();
         //The sliding factor should be the same as the window size
 
-        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> accumulateFactory = new AccumulatorContentFactory<>(
-                (t->t),
+        ExpiredAuctionContentFactory expiredAuctionContentFactory = new ExpiredAuctionContentFactory(
+                emptyContent,
                 (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
-                emptyContent
+                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2))
         );
 
         MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
@@ -123,7 +122,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
                 new UnboundedWindow<>(
                         instance,
                         "auctionWindow",
-                        accumulateFactory,
+                        expiredAuctionContentFactory,
                         neverReport);
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =

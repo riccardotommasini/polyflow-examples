@@ -67,10 +67,10 @@ public class Query8 implements Query {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Always());
+        report.add(new Periodic(10));
 
-        Report report2 = new ReportImpl();
-        report.add( new Never());
+        Report neverReport = new ReportImpl();
+        neverReport.add( new Never());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create("empty");
@@ -104,7 +104,7 @@ public class Query8 implements Query {
                         instance,
                         "personWindow",
                         slidingContentFactory,
-                        report2,
+                        neverReport,
                         2000);
 
         RelationToRelationOperator<Table> r2r = new R2Rq8(List.of("personWindow", "auctionWindow"), "res");

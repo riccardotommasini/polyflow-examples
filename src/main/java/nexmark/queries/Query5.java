@@ -53,6 +53,7 @@ public class Query5 implements Query {
 
     public void execute(){
 
+        //TODO: can use a key-val partition on the item and just count it
         StreamGenerator generator = new StreamGenerator();
 
         DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
@@ -64,13 +65,13 @@ public class Query5 implements Query {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(1));
+        report.add(new Periodic(10));
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
         LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
                 emptyContent,
-                1000,
+                100,
                 t->t.getElement().copy(),
                 (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
 
@@ -85,7 +86,7 @@ public class Query5 implements Query {
                         "bidWindow",
                         contentFactory,
                         report,
-                        1000);
+                        100);
 
 
         RelationToRelationOperator<Table> r2r = new R2Rq5(List.of("bidWindow"), "res");

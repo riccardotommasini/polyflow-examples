@@ -11,6 +11,7 @@ import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
 import nexmark.operators.s2r.PhysicalSlidingWindow;
 import nexmark.operators.s2r.UnboundedWindow;
+import nexmark.report.Always;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
@@ -72,7 +73,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(1));
+        report.add(new Always());
 
         Report neverReport = new ReportImpl();
         neverReport.add(new Never());
@@ -122,8 +123,8 @@ up until that point (basically, every report gives you a snapshot of the possibl
                 new PhysicalSlidingWindow<>(
                         instance,
                         "auctionWindow",
-                        slidingFactory,
-                        neverReport
+                        slidingFactory, //TODO: rivedere anche qui come nella q4 se riusciamo a tirare fuori le closed auctions
+                        report
                         );
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
@@ -131,7 +132,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
                         instance,
                         "bidWindow",
                         containerContentFactory,
-                        report);
+                        neverReport);
 
         RelationToRelationOperator<Table> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
 
