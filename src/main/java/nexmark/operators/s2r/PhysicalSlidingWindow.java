@@ -70,7 +70,8 @@ public class PhysicalSlidingWindow<I, W, R extends Iterable<?>> implements Strea
     @Override
     public void compute(I i, long l) {
         activeContent.add(i);
-        time.addEvaluationTimeInstants(new TimeInstant(l));
+        if(report.report(null, activeContent, l, System.currentTimeMillis()))
+            time.addEvaluationTimeInstants(new TimeInstant(l));
     }
 
     @Override

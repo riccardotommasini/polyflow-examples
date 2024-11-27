@@ -56,6 +56,7 @@ Assumption: no bids arrive for a closed auction. We don not use the closing pric
 up until that point (basically, every report gives you a snapshot of the possible closing price if the auction were to end in that isntant)
 
         */
+    //TODO creare un content per expired auction + physical sliding
 
     public double throughput;
     public double totalTime;

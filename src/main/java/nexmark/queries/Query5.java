@@ -53,7 +53,10 @@ public class Query5 implements Query {
 
     public void execute(){
 
-        //TODO: can use a key-val partition on the item and just count it
+        /*TODO: can use a key-val partition on the item and just count it,
+           but need to create a custom key-val component to maintain
+           a synchronized sliding window between each partition
+        */
         StreamGenerator generator = new StreamGenerator();
 
         DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
