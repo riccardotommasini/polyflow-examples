@@ -1,9 +1,6 @@
 package nexmark.queries;
 
-import nexmark.content.LogicalSlidingContentFactory;
-import nexmark.content.MaxContentFactory;
-import nexmark.content.PhysicalSlidingContent;
-import nexmark.content.PhysicalSlidingContentFactory;
+import nexmark.content.*;
 import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq4;
 import nexmark.operators.r2r.R2Rq6;
@@ -13,6 +10,7 @@ import nexmark.operators.s2r.PhysicalSlidingWindow;
 import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Always;
 import nexmark.report.Never;
+import nexmark.report.OnContentFull;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import nexmark.utils.Query;
@@ -56,7 +54,6 @@ Assumption: no bids arrive for a closed auction. We don not use the closing pric
 up until that point (basically, every report gives you a snapshot of the possible closing price if the auction were to end in that isntant)
 
         */
-    //TODO creare un content per expired auction + physical sliding
 
     public double throughput;
     public double totalTime;
@@ -72,9 +69,10 @@ up until that point (basically, every report gives you a snapshot of the possibl
         // define output stream
         DataStream<Row> outStream = new RowStream("out");
 
+        int windowSize = 10;
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Always());
+        report.add(new Periodic(1));
 
         Report neverReport = new ReportImpl();
         neverReport.add(new Never());
@@ -83,11 +81,11 @@ up until that point (basically, every report gives you a snapshot of the possibl
         Table emptyContent = Table.create();
 
 
-        PhysicalSlidingContentFactory<Table, Table> slidingFactory = new PhysicalSlidingContentFactory<>(
+        Q6ContentFactory slidingFactory = new Q6ContentFactory(
                 emptyContent,
-                10,
                 (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2))
+                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
+                windowSize
         );
 
         MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
@@ -124,7 +122,7 @@ up until that point (basically, every report gives you a snapshot of the possibl
                 new PhysicalSlidingWindow<>(
                         instance,
                         "auctionWindow",
-                        slidingFactory, //TODO: rivedere anche qui come nella q4 se riusciamo a tirare fuori le closed auctions
+                        slidingFactory,
                         report
                         );
 

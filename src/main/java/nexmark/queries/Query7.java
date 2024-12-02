@@ -2,6 +2,7 @@ package nexmark.queries;
 
 import custom.customoperators.CustomTumblingWindow;
 import nexmark.content.LogicalSlidingContentFactory;
+import nexmark.content.MaxContentFactory;
 import nexmark.customdatatypes.TestTimestampedRow;
 import nexmark.customdatatypes.TimestampedElement;
 import nexmark.operators.r2r.R2Rq7;
@@ -74,10 +75,23 @@ public class Query7 implements Query {
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
+        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new MaxContentFactory<>(
                 (t->t),
                 (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
+                (t1, t2)->{
+                    if(t1 == null)
+                        return -1;
+                    Long currMax, element;
+                    currMax = t1.getElement().longColumn("price").get(0);
+                    element = t2.getElement().longColumn("price").get(0);
+                    if(currMax < element){
+                        return -1;
+                    }
+                    else if(currMax > element){
+                        return 1;
+                    }
+                    else return 0;
+                },
                 emptyContent);
 
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
@@ -89,7 +103,7 @@ public class Query7 implements Query {
                 new CustomTumblingWindow<>(
                         instance,
                         "bidWindow",
-                        contentFactory, //TODO: usare semplicemente una max factory e tenere solo la bid più alta
+                        contentFactory,
                         report,
                         100); // width of 1000 is too much given the timestamps generated in our file
 

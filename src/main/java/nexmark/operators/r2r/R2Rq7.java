@@ -23,15 +23,7 @@ public class R2Rq7 implements RelationToRelationOperator<Table> {
         Table t = list.get(0);
         if(t.isEmpty())
             return t;
-        int maxPriceRow = 0;
-        long maxPrice = 0;
-        for(int i = 0; i<t.rowCount(); i++ ){
-            if(t.row(i).getLong("price") > maxPrice){
-                maxPrice = t.row(i).getLong("price");
-                maxPriceRow = i;
-            }
-        }
-        return t.emptyCopy().append(t.row(maxPriceRow)).selectColumns("auction", "price");
+        return t.selectColumns("auction", "price");
 
     }
 
