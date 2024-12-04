@@ -55,7 +55,8 @@ public class Query5 implements Query {
 
         /*TODO: can use a key-val partition on the item and just count it,
            but need to create a custom key-val component to maintain
-           a synchronized sliding window between each partition
+           a synchronized sliding window between each partition -->
+           Tested and it's even slower since it needs to keep in memory a lot of sliding windows
         */
         StreamGenerator generator = new StreamGenerator();
 
