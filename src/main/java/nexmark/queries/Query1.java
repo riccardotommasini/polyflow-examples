@@ -25,7 +25,7 @@ import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
-import org.streamreasoning.polyflow.base.processing.TaskImpl;
+import nexmark.utils.MyTask;
 import relational.sds.SDSjtablesaw;
 import relational.stream.RowStream;
 import tech.tablesaw.api.Row;
@@ -86,7 +86,7 @@ public class Query1 implements Query {
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new TaskImpl<>("1");
+        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
