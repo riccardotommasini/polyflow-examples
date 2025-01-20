@@ -1,12 +1,12 @@
 package nexmark.queries;
 
-
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq1;
-import nexmark.operators.r2s.RelationToStreamRow;
+import nexmark.content.custom.FastAccumulatorFactory;
+import nexmark.operators.r2r.custom.R2Rq1;
+import nexmark.operators.r2s.R2SCustom;
 import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.report.Periodic;
-import nexmark.stream.StreamGenerator;
+import nexmark.stream.StreamGeneratorCustom;
+import nexmark.utils.MyTask;
 import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
@@ -18,59 +18,45 @@ import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
-import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
-import nexmark.utils.MyTask;
-import relational.sds.SDSjtablesaw;
+import org.streamreasoning.polyflow.base.sds.SDSDefault;
 import relational.stream.RowStream;
-import tech.tablesaw.api.Row;
-import tech.tablesaw.api.Table;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-Query 1 takes an incoming bid stream and converts the prices
-of the bids from U.S. dollars to Euros.
-SELECT itemid, DOLTOEUR(price), bidderId, bidTime
-FROM bid;
- */
-public class Query1 implements Query {
+public class Query1Custom implements Query {
 
     public double throughput;
     public double totalTime;
     public double timeSpentParsing;
     public void execute(){
 
-        StreamGenerator generator = new StreamGenerator();
+        StreamGeneratorCustom generator = new StreamGeneratorCustom();
 
-        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
-        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
-        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+        DataStream<Serializable> auction = generator.getStream("Auction");
+        DataStream<Serializable> bid = generator.getStream("Bid");
+        DataStream<Serializable> person = generator.getStream("Person");
 
         // define output stream
-        DataStream<Row> outStream = new RowStream("out");
+        DataStream<Serializable> outStream = new RowStream("out");
 
         // Engine properties
         Report report = new ReportImpl();
         report.add(new Periodic(1)); //TODO: review output strategy
 
         Time instance = new TimeImpl(0);
-        Table emptyContent = Table.create();
+        List<Serializable> emptyContent = new ArrayList<>();
 
         //The sliding factor should be the same as the window size
-        AccumulatorContentFactory<TimestampedElement<Table>,TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
-                (t->t),
-                (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
-                emptyContent
-        );
+        FastAccumulatorFactory contentFactory = new FastAccumulatorFactory();
 
-        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+        ContinuousProgram<Serializable, Serializable, List<Serializable>, Serializable> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+        StreamToRelationOperator<Serializable, Serializable, List<Serializable>> bidWindow =
                 new EvictOnReportWindow<>(
                         instance,
                         "bidWindow",
@@ -78,27 +64,27 @@ public class Query1 implements Query {
                         report);
 
 
-        RelationToRelationOperator<Table> r2r = new R2Rq1(List.of("bidWindow"), "res");
+        RelationToRelationOperator<List<Serializable>> r2r = new R2Rq1(List.of("bidWindow"), "res");
 
-        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
+        RelationToStreamOperator<List<Serializable>, Serializable> r2sOp = new R2SCustom();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
+        Task<Serializable, Serializable, List<Serializable>, Serializable> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
-                .addSDS(new SDSjtablesaw())
+                .addSDS(new SDSDefault<>())
                 .addDAG(new DAGImpl<>())
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);
 
 
-        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> outputStreams = new ArrayList<>();
         outputStreams.add(outStream);
 
         cp.buildTask(task, inputStreams, outputStreams);
@@ -128,5 +114,3 @@ public class Query1 implements Query {
         return timeSpentParsing;
     }
 }
-
-

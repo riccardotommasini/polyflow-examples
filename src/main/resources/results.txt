@@ -1,33 +1,9 @@
-
-Query 1:
-Average Total Time: 21190.0 ms
-Average Throughput: 47.206432813000994 events/ms
-Average Time Spent Parsing: 3089.6 ms
-Query 2:
-Average Total Time: 15646.0 ms
-Average Throughput: 63.91555254987952 events/ms
-Average Time Spent Parsing: 3063.0 ms
-Query 3:
-Average Total Time: 48578.4 ms
-Average Throughput: 20.58553896268482 events/ms
-Average Time Spent Parsing: 3043.5 ms
-Query 4:
-Average Total Time: 108567.1 ms
-Average Throughput: 9.211733710072906 events/ms
-Average Time Spent Parsing: 3090.7 ms
-Query 5:
-Average Total Time: 63982.5 ms
-Average Throughput: 15.630498903440094 events/ms
-Average Time Spent Parsing: 3239.1 ms
-Query 6:
-Average Total Time: 104526.8 ms
-Average Throughput: 9.567214616227036 events/ms
-Average Time Spent Parsing: 3090.2 ms
-Query 7:
-Average Total Time: 9630.1 ms
-Average Throughput: 103.843092937752 events/ms
-Average Time Spent Parsing: 3098.7 ms
-Query 8:
-Average Total Time: 17043.3 ms
-Average Throughput: 58.67460524905133 events/ms
-Average Time Spent Parsing: 3099.3 ms
+"Experiment-Name","Throughput(events/ms)","InputSize","MillisecondsPassed","ParsingTime(ms)"
+"query-1","48.389014496546736","1000000","20700.9","3186.7"
+"query-2","65.8371447941509","1000000","15189.2","3083.4"
+"query-3","21.218304838337612","1000000","47129.6","3050.3"
+"query-4","9.403891171007299","1000000","106342.6","3152.3"
+"query-5","15.218035132820631","1000000","65716.0","3247.2"
+"query-6","9.167933168406599","1000000","109080.6","3091.1"
+"query-7","103.13563273248799","1000000","9696.3","3131.0"
+"query-8","58.0146116191102","1000000","17237.2","3102.7"

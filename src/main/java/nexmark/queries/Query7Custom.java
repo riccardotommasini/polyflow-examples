@@ -1,12 +1,15 @@
 package nexmark.queries;
 
-import nexmark.content.LogicalSlidingContentFactory;
+import custom.customoperators.CustomTumblingWindow;
+import nexmark.content.MaxContentFactory;
+import nexmark.content.custom.FastMaxFactory;
 import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq5;
+import nexmark.operators.r2r.custom.R2Rq7;
+import nexmark.operators.r2s.R2SCustom;
 import nexmark.operators.r2s.RelationToStreamRow;
-import nexmark.operators.s2r.LogicalSlidingWindow;
-import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.stream.StreamGeneratorCustom;
+import nexmark.utils.MyTask;
 import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
@@ -15,35 +18,38 @@ import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
+import org.streamreasoning.polyflow.api.secret.report.strategies.OnWindowClose;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
-import nexmark.utils.MyTask;
+import org.streamreasoning.polyflow.base.sds.SDSDefault;
 import relational.sds.SDSjtablesaw;
 import relational.stream.RowStream;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query5 implements Query {
+public class Query7Custom implements Query {
 
         /*
-        This query selects the item with the most bids in
-        the past one hour time period; the “hottest” item.
-        The results are output every minute. This query uses
-        a time-based, sliding window group by operation.
-        SELECT bid.itemid
-        FROM bid [RANGE 60 MINUTES PRECEDING]
-        WHERE (SELECT COUNT(bid.itemid)
-        FROM bid [PARTITION BY bid.itemid
-        RANGE 60 MINUTES PRECEDING])
-        >= ALL (SELECT COUNT(bid.itemid)
-        FROM bid [PARTITION BY bid.itemid
-        RANGE 60 MINUTES PRECEDING]
+        Query 7 monitors the highest price items currently
+        on auction. Every ten minutes, this query returns the
+        highest bid (and associated itemid) in the most re-
+        cent ten minutes. This query uses a time-based, fixed-
+        window group by. The syntax FIXEDRANGE is used
+        in place of RANGE to indicate that the highest bid
+        should be evaluated every ten minutes instead of over
+        a sliding ten minute window.
+        SELECT bid.price, bid.itemid
+        FROM bid where bid.price =
+        (SELECT MAX(bid.price)
+        FROM bid [FIXEDRANGE
+        10 MINUTES PRECEDING]);
         */
 
     public double throughput;
@@ -52,67 +58,57 @@ public class Query5 implements Query {
 
     public void execute(){
 
-        /*TODO: can use a key-val partition on the item and just count it,
-           but need to create a custom key-val component to maintain
-           a synchronized sliding window between each partition -->
-           Tested and it's even slower since it needs to keep in memory a lot of sliding windows
-        */
-        StreamGenerator generator = new StreamGenerator();
+        StreamGeneratorCustom generator = new StreamGeneratorCustom();
 
-        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
-        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
-        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+        DataStream<Serializable> auction = generator.getStream("Auction");
+        DataStream<Serializable> bid = generator.getStream("Bid");
+        DataStream<Serializable> person = generator.getStream("Person");
 
         // define output stream
-        DataStream<Row> outStream = new RowStream("out");
+        DataStream<Serializable> outStream = new RowStream("out");
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(10));
+        report.add(new OnWindowClose());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
-        LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
-                emptyContent,
-                100,
-                t->t.getElement().copy(),
-                (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
 
-        );
+        FastMaxFactory contentFactory = new FastMaxFactory();
 
-        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+        ContinuousProgram<Serializable, Serializable, List<Serializable>, Serializable> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
-                new LogicalSlidingWindow<>(
+
+        //only interested in the bidWindow, which is a tumbling window of size 10 minutes
+        StreamToRelationOperator<Serializable, Serializable, List<Serializable>> bidWindow =
+                new CustomTumblingWindow<>(
                         instance,
                         "bidWindow",
                         contentFactory,
                         report,
-                        100);
+                        100); // width of 1000 is too much given the timestamps generated in our file
 
+        RelationToRelationOperator<List<Serializable>> r2r = new R2Rq7(List.of("bidWindow"), "res");
+        RelationToStreamOperator<List<Serializable>, Serializable> r2sOp = new R2SCustom();
 
-        RelationToRelationOperator<Table> r2r = new R2Rq5(List.of("bidWindow"), "res");
-
-        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
-
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
+        Task<Serializable, Serializable, List<Serializable>, Serializable> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
-                .addSDS(new SDSjtablesaw())
+                .addSDS(new SDSDefault<>())
                 .addDAG(new DAGImpl<>())
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);
 
 
-        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> outputStreams = new ArrayList<>();
         outputStreams.add(outStream);
 
         cp.buildTask(task, inputStreams, outputStreams);
@@ -142,3 +138,4 @@ public class Query5 implements Query {
     }
 
 }
+

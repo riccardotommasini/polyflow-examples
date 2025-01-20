@@ -1,15 +1,11 @@
-package nexmark.operators.r2r;
+package nexmark.operators.r2r.custom;
 
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
-import tech.tablesaw.api.Row;
-import tech.tablesaw.api.Table;
-import static tech.tablesaw.aggregate.AggregateFunctions.*;
 
-import java.util.Comparator;
+import java.io.Serializable;
 import java.util.List;
 
-public class R2Rq7 implements RelationToRelationOperator<Table> {
-
+public class R2Rq7 implements RelationToRelationOperator<List<Serializable>> {
     List<String> tvgNames;
     String resName;
 
@@ -17,14 +13,9 @@ public class R2Rq7 implements RelationToRelationOperator<Table> {
         this.tvgNames = tvgNames;
         this.resName = resName;
     }
-
     @Override
-    public Table eval(List<Table> list) {
-        Table t = list.get(0);
-        if(t.isEmpty())
-            return t;
-        return t.selectColumns("auction", "price");
-
+    public List<Serializable> eval(List<List<Serializable>> list) {
+        return list.get(0);
     }
 
     @Override

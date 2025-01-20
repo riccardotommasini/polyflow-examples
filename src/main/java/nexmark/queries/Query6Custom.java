@@ -1,20 +1,30 @@
 package nexmark.queries;
 
-import nexmark.content.*;
+import com.fasterxml.jackson.jaxrs.json.annotation.JSONP;
+import nexmark.content.MaxContentFactory;
+import nexmark.content.custom.EvictContainerContent;
+import nexmark.content.custom.EvictContainerFactory;
+import nexmark.content.custom.FastMaxFactory;
+import nexmark.content.custom.Q6ContentFactory;
+import nexmark.customdatatypes.BidEvent;
 import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq6;
+import nexmark.operators.r2r.custom.R2Rq6;
+import nexmark.operators.r2s.R2SCustom;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.PhysicalSlidingWindow;
 import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
+import nexmark.stream.StreamGeneratorCustom;
+import nexmark.utils.MyTask;
 import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
+import org.streamreasoning.polyflow.api.sds.SDS;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.time.Time;
@@ -23,16 +33,17 @@ import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.ContainerContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
-import nexmark.utils.MyTask;
+import org.streamreasoning.polyflow.base.sds.SDSDefault;
 import relational.sds.SDSjtablesaw;
 import relational.stream.RowStream;
 import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query6 implements Query {
+public class Query6Custom implements Query {
 
         /*
         Query 6 calculates, for each seller, the average sell-
@@ -53,14 +64,14 @@ Assumption: no bids arrive for a closed auction.
     public double timeSpentParsing;
     public void execute(){
 
-        StreamGenerator generator = new StreamGenerator();
+        StreamGeneratorCustom generator = new StreamGeneratorCustom();
 
-        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
-        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
-        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+        DataStream<Serializable> auction = generator.getStream("Auction");
+        DataStream<Serializable> bid = generator.getStream("Bid");
+        DataStream<Serializable> person = generator.getStream("Person");
 
         // define output stream
-        DataStream<Row> outStream = new RowStream("out");
+        DataStream<Serializable> outStream = new RowStream("out");
 
         int windowSize = 10;
         // Engine properties
@@ -71,83 +82,54 @@ Assumption: no bids arrive for a closed auction.
         neverReport.add(new Never());
 
         Time instance = new TimeImpl(0);
-        Table emptyContent = Table.create();
 
 
-        Q6ContentFactory slidingFactory = new Q6ContentFactory(
-                emptyContent,
-                (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
-                windowSize
-        );
 
-        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
-                (t->t),
-                (t->t.getElement().copy()),
-                (t1, t2)->{
-                    if(t1 == null)
-                        return -1;
-                    Long currMax, element;
-                    currMax = t1.getElement().longColumn("price").get(0);
-                    element = t2.getElement().longColumn("price").get(0);
-                    if(currMax < element){
-                        return -1;
-                    }
-                    else if(currMax > element){
-                        return 1;
-                    }
-                    else return 0;
-                },
-                emptyContent
-        );
 
-        ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
-                i-> i.getElement().longColumn("auction").get(0),
-                w->null,
-                r->null,
-                (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
-                emptyContent,
-                maxContentFactory);
+        FastMaxFactory maxContentFactory = new FastMaxFactory();
 
-        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+        EvictContainerFactory containerContentFactory = new EvictContainerFactory(maxContentFactory);
+        Q6ContentFactory slidingFactory = new Q6ContentFactory(windowSize, (EvictContainerContent) containerContentFactory.create());
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
+        ContinuousProgram<Serializable, Serializable, List<Serializable>, Serializable> cp = new ContinuousProgramImpl<>();
+
+        StreamToRelationOperator<Serializable, Serializable, List<Serializable>> auctionWindow =
                 new PhysicalSlidingWindow<>(
                         instance,
                         "auctionWindow",
                         slidingFactory,
                         report
-                        );
+                );
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+        StreamToRelationOperator<Serializable, Serializable, List<Serializable>> bidWindow =
                 new UnboundedWindow<>(
                         instance,
                         "bidWindow",
                         containerContentFactory,
                         neverReport);
 
-        RelationToRelationOperator<Table> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
+        RelationToRelationOperator<List<Serializable>> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
 
-        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
+        RelationToStreamOperator<List<Serializable>, Serializable> r2sOp = new R2SCustom();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
+        Task<Serializable, Serializable, List<Serializable>, Serializable> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addS2ROperator(auctionWindow, auction)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
-                .addSDS(new SDSjtablesaw())
+                .addSDS(new SDSDefault<>())
                 .addDAG(new DAGImpl<>())
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);
 
 
-        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        List<DataStream<Serializable>> outputStreams = new ArrayList<>();
         outputStreams.add(outStream);
 
         cp.buildTask(task, inputStreams, outputStreams);
@@ -160,7 +142,7 @@ Assumption: no bids arrive for a closed auction.
         this.throughput = generator.throughput;
         this.timeSpentParsing = generator.timeSpentParsing;
 
-        }
+    }
     @Override
     public double getTotalTime() {
         return totalTime;
@@ -178,3 +160,4 @@ Assumption: no bids arrive for a closed auction.
 
 
 }
+

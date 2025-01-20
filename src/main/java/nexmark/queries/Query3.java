@@ -1,15 +1,12 @@
 package nexmark.queries;
 
 
-import nexmark.content.LogicalSlidingContentFactory;
 import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.R2Rq5;
-import nexmark.operators.r2r.q3.R2Rq3_auction;
-import nexmark.operators.r2r.q3.R2Rq3_join;
-import nexmark.operators.r2r.q3.R2Rq3_person;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_auction;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_join;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_person;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.EvictOnReportWindow;
-import nexmark.operators.s2r.LogicalSlidingWindow;
 import nexmark.operators.s2r.UnboundedWindow;
 import nexmark.report.Never;
 import nexmark.report.Periodic;

@@ -1,4 +1,4 @@
-package nexmark.operators.r2r;
+package nexmark.operators.r2r.tablesaw;
 
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import tech.tablesaw.aggregate.AggregateFunctions;

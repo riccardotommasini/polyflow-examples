@@ -1,16 +1,19 @@
-package nexmark.operators.r2r.q3;
+package nexmark.operators.r2r.tablesaw;
 
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
+import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
+import static tech.tablesaw.aggregate.AggregateFunctions.*;
 
+import java.util.Comparator;
 import java.util.List;
 
-public class R2Rq3_person implements RelationToRelationOperator<Table> {
+public class R2Rq7 implements RelationToRelationOperator<Table> {
 
     List<String> tvgNames;
     String resName;
 
-    public R2Rq3_person(List<String> tvgNames, String resName){
+    public R2Rq7(List<String> tvgNames, String resName){
         this.tvgNames = tvgNames;
         this.resName = resName;
     }
@@ -20,8 +23,8 @@ public class R2Rq3_person implements RelationToRelationOperator<Table> {
         Table t = list.get(0);
         if(t.isEmpty())
             return t;
+        return t.selectColumns("auction", "price");
 
-        return t.where(t.stringColumn("state").isIn(List.of("CA", "OR", "ID")));
     }
 
     @Override

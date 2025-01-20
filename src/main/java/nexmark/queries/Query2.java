@@ -2,8 +2,7 @@ package nexmark.queries;
 
 
 import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.R2Rq1;
-import nexmark.operators.r2r.R2Rq2;
+import nexmark.operators.r2r.tablesaw.R2Rq2;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.report.Periodic;

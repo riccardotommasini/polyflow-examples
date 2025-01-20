@@ -1,13 +1,11 @@
 package nexmark.queries;
 
-import custom.customoperators.CustomTumblingWindow;
 import nexmark.content.LogicalSlidingContentFactory;
 import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.R2Rq8;
+import nexmark.operators.r2r.tablesaw.R2Rq8;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
-import nexmark.report.Always;
 import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
@@ -19,7 +17,6 @@ import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
-import org.streamreasoning.polyflow.api.secret.report.strategies.OnWindowClose;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
