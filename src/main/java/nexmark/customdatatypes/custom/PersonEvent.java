@@ -1,9 +1,8 @@
-package nexmark.customdatatypes;
+package nexmark.customdatatypes.custom;
 
-import java.io.Serializable;
 import java.time.Instant;
 
-public class PersonEvent implements Serializable {
+public class PersonEvent implements Entity {
 
     public long timestamp;
     public long key;

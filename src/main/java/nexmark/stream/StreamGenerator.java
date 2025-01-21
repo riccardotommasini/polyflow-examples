@@ -1,10 +1,7 @@
 package nexmark.stream;
 
-import nexmark.customdatatypes.TestTimestampedRow;
-import nexmark.customdatatypes.TimestampedElement;
-import org.javatuples.Pair;
-import org.javatuples.Quartet;
-import org.javatuples.Tuple;
+import nexmark.customdatatypes.tablesaw.TestTimestampedRow;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import relational.stream.RowStream;
 import relational.stream.RowStreamGenerator;
@@ -14,8 +11,6 @@ import tech.tablesaw.columns.Column;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;

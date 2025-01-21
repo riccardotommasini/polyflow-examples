@@ -1,33 +1,28 @@
 package nexmark.operators.r2r.custom;
 
 import nexmark.customdatatypes.custom.BidEvent;
-import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
-
 import nexmark.customdatatypes.custom.Entity;
-import java.util.ArrayList;
-import java.util.List;
+import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
+import tech.tablesaw.api.Table;
 
-public class R2Rq1 implements RelationToRelationOperator<List<Entity>> {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class R2Rq2 implements RelationToRelationOperator<List<Entity>> {
 
     List<String> tvgNames;
     String resName;
 
-    public R2Rq1(List<String> tvgNames, String resName){
+    public R2Rq2(List<String> tvgNames, String resName){
         this.tvgNames = tvgNames;
         this.resName = resName;
     }
 
     @Override
     public List<Entity> eval(List<List<Entity>> list) {
-        List<Entity> data = list.get(0);
-        List<Entity> res = new ArrayList<>();
-        data.stream().map(d->(BidEvent)d).map(d->{
-            BidEvent s = d.copy(d);
-            s.price = (long) (s.price*0.85);
-            return s;
-        }).forEach(res::add);
-        return res;
-
+        List<Entity> t = list.get(0);
+       return t.stream().map(event->(BidEvent)event).filter(event-> event.auction==1007 || event.auction == 1020 || event.auction == 2001 || event.auction == 2019
+               || event.auction == 1087).collect(Collectors.toList());
     }
 
     @Override
@@ -39,4 +34,5 @@ public class R2Rq1 implements RelationToRelationOperator<List<Entity>> {
     public String getResName() {
         return resName;
     }
+
 }

@@ -1,21 +1,21 @@
 package nexmark.content.custom;
 
-import nexmark.customdatatypes.BidEvent;
+import nexmark.customdatatypes.custom.BidEvent;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 
-import java.io.Serializable;
+import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EvictContainerContent implements Content<Serializable, Serializable, List<Serializable>> {
+public class EvictContainerContent implements Content<Entity, Entity, List<Entity>> {
 
-    private Map<Long, Content<Serializable, Serializable, List<Serializable>>> keyedContent = new HashMap<>();
-    ContentFactory<Serializable, Serializable, List<Serializable>> internalContentFactory;
+    private Map<Long, Content<Entity, Entity, List<Entity>>> keyedContent = new HashMap<>();
+    ContentFactory<Entity, Entity, List<Entity>> internalContentFactory;
 
-    public EvictContainerContent(ContentFactory<Serializable, Serializable, List<Serializable>> internalContentFactory ){
+    public EvictContainerContent(ContentFactory<Entity, Entity, List<Entity>> internalContentFactory ){
 
         this.internalContentFactory = internalContentFactory;
     }
@@ -26,7 +26,7 @@ public class EvictContainerContent implements Content<Serializable, Serializable
     }
 
     @Override
-    public void add(Serializable i) {
+    public void add(Entity i) {
         BidEvent event = (BidEvent)i;
         Long key = event.auction;
         keyedContent.computeIfAbsent(key, k->internalContentFactory.create());
@@ -34,9 +34,9 @@ public class EvictContainerContent implements Content<Serializable, Serializable
     }
 
     @Override
-    public List<Serializable> coalesce() {
+    public List<Entity> coalesce() {
         return keyedContent.values().stream().map(c->c.coalesce()).reduce(new ArrayList<>(), (r1, r2)->{
-            List<Serializable> res = new ArrayList<>();
+            List<Entity> res = new ArrayList<>();
             res.addAll(r1);
             res.addAll(r2);
             return res;

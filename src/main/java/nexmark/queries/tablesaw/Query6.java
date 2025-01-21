@@ -1,10 +1,12 @@
-package nexmark.queries;
+package nexmark.queries.tablesaw;
 
-
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq1;
+import nexmark.content.*;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
+import nexmark.operators.r2r.tablesaw.R2Rq6;
 import nexmark.operators.r2s.RelationToStreamRow;
-import nexmark.operators.s2r.EvictOnReportWindow;
+import nexmark.operators.s2r.PhysicalSlidingWindow;
+import nexmark.operators.s2r.UnboundedWindow;
+import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import nexmark.utils.Query;
@@ -18,7 +20,7 @@ import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
-import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
+import org.streamreasoning.polyflow.base.contentimpl.factories.ContainerContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import nexmark.utils.MyTask;
@@ -30,13 +32,21 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-Query 1 takes an incoming bid stream and converts the prices
-of the bids from U.S. dollars to Euros.
-SELECT itemid, DOLTOEUR(price), bidderId, bidTime
-FROM bid;
- */
-public class Query1 implements Query {
+public class Query6 implements Query {
+
+        /*
+        Query 6 calculates, for each seller, the average sell-
+        ing price of items sold by that seller. For example, auc-
+        tion site administrators may be interested in knowing
+        which users sell the highest price items. This query
+        uses an event-based, sliding window group by.
+        SELECT AVG(CA.price), CA.sellerId
+        FROM closed auction CA
+        [PARTITION BY CA.sellerId
+        ROWS 10 PRECEDING]
+
+Assumption: no bids arrive for a closed auction.
+        */
 
     public double throughput;
     public double totalTime;
@@ -52,39 +62,78 @@ public class Query1 implements Query {
         // define output stream
         DataStream<Row> outStream = new RowStream("out");
 
+        int windowSize = 10;
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(1)); //TODO: review output strategy
+        report.add(new Periodic(1));
+
+        Report neverReport = new ReportImpl();
+        neverReport.add(new Never());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        //The sliding factor should be the same as the window size
-        AccumulatorContentFactory<TimestampedElement<Table>,TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
-                (t->t),
+
+        Q6ContentFactory slidingFactory = new Q6ContentFactory(
+                emptyContent,
                 (t->t.getElement().copy()),
                 ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
+                windowSize
+        );
+
+        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
+                (t->t),
+                (t->t.getElement().copy()),
+                (t1, t2)->{
+                    if(t1 == null)
+                        return -1;
+                    Long currMax, element;
+                    currMax = t1.getElement().longColumn("price").get(0);
+                    element = t2.getElement().longColumn("price").get(0);
+                    if(currMax < element){
+                        return -1;
+                    }
+                    else if(currMax > element){
+                        return 1;
+                    }
+                    else return 0;
+                },
                 emptyContent
         );
 
+        ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
+                i-> i.getElement().longColumn("auction").get(0),
+                w->null,
+                r->null,
+                (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
+                emptyContent,
+                maxContentFactory);
+
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
+                new PhysicalSlidingWindow<>(
+                        instance,
+                        "auctionWindow",
+                        slidingFactory,
+                        report
+                        );
 
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
-                new EvictOnReportWindow<>(
+                new UnboundedWindow<>(
                         instance,
                         "bidWindow",
-                        contentFactory,
-                        report);
+                        containerContentFactory,
+                        neverReport);
 
-
-        RelationToRelationOperator<Table> r2r = new R2Rq1(List.of("bidWindow"), "res");
+        RelationToRelationOperator<Table> r2r = new R2Rq6(List.of("auctionWindow", "bidWindow"), "res");
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
         Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
+                .addS2ROperator(auctionWindow, auction)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
                 .addSDS(new SDSjtablesaw())
@@ -111,8 +160,7 @@ public class Query1 implements Query {
         this.throughput = generator.throughput;
         this.timeSpentParsing = generator.timeSpentParsing;
 
-    }
-
+        }
     @Override
     public double getTotalTime() {
         return totalTime;
@@ -127,6 +175,6 @@ public class Query1 implements Query {
     public double getTimeSpentParsing() {
         return timeSpentParsing;
     }
+
+
 }
-
-

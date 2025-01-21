@@ -1,10 +1,13 @@
-package nexmark.queries;
+package nexmark.queries.tablesaw;
 
-import nexmark.content.LogicalSlidingContentFactory;
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq5;
+
+import nexmark.content.ExpiredAuctionContentFactory;
+import nexmark.content.MaxContentFactory;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
+import nexmark.operators.r2r.tablesaw.R2Rq4;
 import nexmark.operators.r2s.RelationToStreamRow;
-import nexmark.operators.s2r.LogicalSlidingWindow;
+import nexmark.operators.s2r.UnboundedWindow;
+import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import nexmark.utils.Query;
@@ -18,6 +21,7 @@ import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
+import org.streamreasoning.polyflow.base.contentimpl.factories.ContainerContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import nexmark.utils.MyTask;
@@ -29,34 +33,28 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query5 implements Query {
+public class Query4 implements Query {
 
-        /*
-        This query selects the item with the most bids in
-        the past one hour time period; the “hottest” item.
-        The results are output every minute. This query uses
-        a time-based, sliding window group by operation.
-        SELECT bid.itemid
-        FROM bid [RANGE 60 MINUTES PRECEDING]
-        WHERE (SELECT COUNT(bid.itemid)
-        FROM bid [PARTITION BY bid.itemid
-        RANGE 60 MINUTES PRECEDING])
-        >= ALL (SELECT COUNT(bid.itemid)
-        FROM bid [PARTITION BY bid.itemid
-        RANGE 60 MINUTES PRECEDING]
+      /*
+        Query 4 joins the category file
+        with the closed auction stream to calculate average
+        closing price for each. The query should output up-
+        dated prices when new closing prices arrive for a par-
+        ticular group.
+        SELECT C.id, AVG(CA.price)
+        FROM category C, item I, closed auction CA
+        WHERE C.id = I.categoryId
+        AND I.id = CA.itemid
+        GROUP BY C.id;
+
+        Assumption: no bids arrive for a closed auction.
         */
 
     public double throughput;
     public double totalTime;
     public double timeSpentParsing;
-
     public void execute(){
 
-        /*TODO: can use a key-val partition on the item and just count it,
-           but need to create a custom key-val component to maintain
-           a synchronized sliding window between each partition -->
-           Tested and it's even slower since it needs to keep in memory a lot of sliding windows
-        */
         StreamGenerator generator = new StreamGenerator();
 
         DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
@@ -68,37 +66,74 @@ public class Query5 implements Query {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(10));
+        report.add(new Periodic(1));
+
+        Report neverReport = new ReportImpl();
+        neverReport.add(new Never());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
-        LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
-                emptyContent,
-                100,
-                t->t.getElement().copy(),
-                (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
+        //The sliding factor should be the same as the window size
 
+        ExpiredAuctionContentFactory expiredAuctionContentFactory = new ExpiredAuctionContentFactory(
+                emptyContent,
+                (t->t.getElement().copy()),
+                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2))
         );
+
+        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> maxContentFactory = new MaxContentFactory<>(
+                (t->t),
+                (t->t.getElement().copy()),
+                (t1, t2)->{
+                    if(t1 == null)
+                        return -1;
+                    Long currMax, element;
+                    currMax = t1.getElement().longColumn("price").get(0);
+                    element = t2.getElement().longColumn("price").get(0);
+                    if(currMax < element){
+                        return -1;
+                    }
+                    else if(currMax > element){
+                        return 1;
+                    }
+                    else return 0;
+                },
+                emptyContent
+        );
+
+        ContainerContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table, Long> containerContentFactory = new ContainerContentFactory<>(
+                i-> i.getElement().longColumn("auction").get(0),
+                w->null,
+                r->null,
+                (t1, t2)-> t1.isEmpty()?t2: t1.append(t2),
+                emptyContent,
+                maxContentFactory);
 
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
+                new UnboundedWindow<>(
+                        instance,
+                        "auctionWindow",
+                        expiredAuctionContentFactory,
+                        neverReport);
+
         StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
-                new LogicalSlidingWindow<>(
+                new UnboundedWindow<>(
                         instance,
                         "bidWindow",
-                        contentFactory,
-                        report,
-                        100);
+                        containerContentFactory,
+                        report);
 
-
-        RelationToRelationOperator<Table> r2r = new R2Rq5(List.of("bidWindow"), "res");
+        RelationToRelationOperator<Table> r2r = new R2Rq4(List.of("auctionWindow", "bidWindow"), "res");
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
         Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
+                .addS2ROperator(auctionWindow, auction)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
                 .addSDS(new SDSjtablesaw())
@@ -140,5 +175,6 @@ public class Query5 implements Query {
     public double getTimeSpentParsing() {
         return timeSpentParsing;
     }
+
 
 }

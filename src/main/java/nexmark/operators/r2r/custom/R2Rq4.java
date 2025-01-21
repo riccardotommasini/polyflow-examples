@@ -1,22 +1,21 @@
 package nexmark.operators.r2r.custom;
 
-import nexmark.customdatatypes.custom.AuctionEvent;
-import nexmark.customdatatypes.custom.BidEvent;
-import nexmark.customdatatypes.custom.Q6Event;
+import nexmark.customdatatypes.custom.*;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
+import tech.tablesaw.aggregate.AggregateFunctions;
+import tech.tablesaw.api.Table;
 
-import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class R2Rq6 implements RelationToRelationOperator<List<Entity>> {
+public class R2Rq4 implements RelationToRelationOperator<List<Entity>> {
 
     List<String> tvgNames;
     String resName;
 
-    public R2Rq6(List<String> tvgNames, String resName){
+    public R2Rq4(List<String> tvgNames, String resName){
         this.tvgNames = tvgNames;
         this.resName = resName;
     }
@@ -27,7 +26,7 @@ public class R2Rq6 implements RelationToRelationOperator<List<Entity>> {
         List<Entity> bid = list.get(1);
         List<Entity> result = new ArrayList<>();
         Map<Long, AuctionEvent> idToAuction = new HashMap<>();
-        Map<Long, List<Long>> sellers = new HashMap<>();
+        Map<Long, List<Long>> categories = new HashMap<>();
 
         if(auction.isEmpty())
             return auction;
@@ -37,25 +36,25 @@ public class R2Rq6 implements RelationToRelationOperator<List<Entity>> {
         auction.forEach(a->{
             AuctionEvent event = (AuctionEvent) a;
             idToAuction.put(event.id, event);
-            sellers.put(event.seller, new ArrayList<>());
+            categories.put(event.category, new ArrayList<>());
 
         });
         bid.forEach(b->{
             BidEvent event = (BidEvent) b;
             if(idToAuction.containsKey(event.auction)){
-                sellers.get(idToAuction.get(event.auction).seller).add(event.price);
+                categories.get(idToAuction.get(event.auction).category).add(event.price);
             }
         });
-       sellers.keySet().forEach(s->{
-               double average;
-               double sum = 0;
-               for(Long v : sellers.get(s)){
-                   sum+=v;
-               }
-               average = sum/sellers.get(s).size();
-               result.add(new Q6Event(average, s));
-       });
-       return result;
+        categories.keySet().forEach(s->{
+            double average;
+            double sum = 0;
+            for(Long v : categories.get(s)){
+                sum+=v;
+            }
+            average = sum/categories.get(s).size();
+            result.add(new Q4Event(average, s));
+        });
+        return result;
     }
 
     @Override

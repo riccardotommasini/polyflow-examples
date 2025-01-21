@@ -1,6 +1,4 @@
-package nexmark.customdatatypes;
-
-import tech.tablesaw.api.Row;
+package nexmark.customdatatypes.tablesaw;
 
 public interface TimestampedElement<I> {
 

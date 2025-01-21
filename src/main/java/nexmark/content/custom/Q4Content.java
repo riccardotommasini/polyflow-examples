@@ -1,25 +1,24 @@
 package nexmark.content.custom;
 
 import nexmark.customdatatypes.custom.AuctionEvent;
+import nexmark.customdatatypes.custom.Entity;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 
-import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class Q6Content implements Content<Entity, Entity, List<Entity>> {
+public class Q4Content implements Content<Entity, Entity, List<Entity>> {
 
 
     List<Entity> validAuctions = new ArrayList<>();
-    Queue<Entity> expiredAuctions = new LinkedList<>();
-    int windowSize;
+    List<Entity> expiredAuctions = new ArrayList<>();
+    List<Entity> reportedAuctions = new ArrayList<>();
     EvictContainerContent bidContent;
 
 
-    public Q6Content(int windowSize, EvictContainerContent bidContent){
-        this.windowSize = windowSize;
+    public Q4Content(EvictContainerContent bidContent){
         this.bidContent = bidContent;
     }
 
@@ -30,17 +29,18 @@ public class Q6Content implements Content<Entity, Entity, List<Entity>> {
 
     @Override
     public void add(Entity tableTimestampedElement) {
+        //Old expired auctions, we already reported them and can evict them
+        reportedAuctions.stream().map(e->(AuctionEvent)e).forEach(e->bidContent.removeKey(e.id));
+        reportedAuctions = new ArrayList<>();
+
         AuctionEvent event = (AuctionEvent) tableTimestampedElement;
         long timestamp = event.timestamp;
+
         for(int i = validAuctions.size()-1; i>=0; i--){
             AuctionEvent tmp = (AuctionEvent) validAuctions.get(i);
             if(tmp.expires < timestamp){
-                expiredAuctions.offer(validAuctions.get(i));
+                expiredAuctions.add(validAuctions.get(i));
                 validAuctions.remove(i);
-                while(!expiredAuctions.isEmpty() && expiredAuctions.size() > windowSize) {
-                    AuctionEvent auction = (AuctionEvent) expiredAuctions.poll();
-                    bidContent.removeKey(auction.id);
-                }
             }
         }
         validAuctions.add(tableTimestampedElement);
@@ -48,6 +48,8 @@ public class Q6Content implements Content<Entity, Entity, List<Entity>> {
 
     @Override
     public List<Entity> coalesce() {
-        return new ArrayList<>(expiredAuctions);
+        expiredAuctions.forEach(a->reportedAuctions.add(a));
+        expiredAuctions = new ArrayList<>();
+        return reportedAuctions;
     }
 }

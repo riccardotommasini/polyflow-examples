@@ -1,8 +1,6 @@
-package nexmark.customdatatypes;
+package nexmark.customdatatypes.custom;
 
-import java.io.Serializable;
-
-public class Q6Event implements Serializable {
+public class Q6Event implements Entity {
 
     public double averagePrice;
     //Auction fields

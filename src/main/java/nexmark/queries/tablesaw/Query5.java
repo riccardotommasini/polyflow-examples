@@ -1,12 +1,10 @@
-package nexmark.queries;
+package nexmark.queries.tablesaw;
 
 import nexmark.content.LogicalSlidingContentFactory;
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq8;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
+import nexmark.operators.r2r.tablesaw.R2Rq5;
 import nexmark.operators.r2s.RelationToStreamRow;
-import nexmark.operators.s2r.EvictOnReportWindow;
 import nexmark.operators.s2r.LogicalSlidingWindow;
-import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import nexmark.utils.Query;
@@ -20,7 +18,6 @@ import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
-import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import nexmark.utils.MyTask;
@@ -32,20 +29,22 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query8 implements Query {
+public class Query5 implements Query {
 
-       /*
-        This query finds people who put something up for
-        sale within twelve hours of registering to use the auc-
-        tion service. This query could be used to track new
-        users for user followup or to make sure the new users
-        are “behaving”. This query uses a sliding window join
-        over a logical or time-based window.
-        SELECT person.id, person.name
-        FROM person [RANGE 12 HOURS PRECEDING],
-        open auction [RANGE 12 HOURS PRECEDING]
-        WHERE person.id = open auction.sellerId;
-       */
+        /*
+        This query selects the item with the most bids in
+        the past one hour time period; the “hottest” item.
+        The results are output every minute. This query uses
+        a time-based, sliding window group by operation.
+        SELECT bid.itemid
+        FROM bid [RANGE 60 MINUTES PRECEDING]
+        WHERE (SELECT COUNT(bid.itemid)
+        FROM bid [PARTITION BY bid.itemid
+        RANGE 60 MINUTES PRECEDING])
+        >= ALL (SELECT COUNT(bid.itemid)
+        FROM bid [PARTITION BY bid.itemid
+        RANGE 60 MINUTES PRECEDING]
+        */
 
     public double throughput;
     public double totalTime;
@@ -53,6 +52,11 @@ public class Query8 implements Query {
 
     public void execute(){
 
+        /*TODO: can use a key-val partition on the item and just count it,
+           but need to create a custom key-val component to maintain
+           a synchronized sliding window between each partition -->
+           Tested and it's even slower since it needs to keep in memory a lot of sliding windows
+        */
         StreamGenerator generator = new StreamGenerator();
 
         DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
@@ -66,21 +70,11 @@ public class Query8 implements Query {
         Report report = new ReportImpl();
         report.add(new Periodic(10));
 
-        Report neverReport = new ReportImpl();
-        neverReport.add( new Never());
-
         Time instance = new TimeImpl(0);
-        Table emptyContent = Table.create("empty");
-
-        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
-                (t->t),
-                (t->t.getElement().copy()),
-                ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
-                emptyContent);
-
-        LogicalSlidingContentFactory<Table, Table> slidingContentFactory = new LogicalSlidingContentFactory<>(
+        Table emptyContent = Table.create();
+        LogicalSlidingContentFactory<Table, Table> contentFactory = new LogicalSlidingContentFactory<>(
                 emptyContent,
-                2000,
+                100,
                 t->t.getElement().copy(),
                 (t1, t2)->t1.isEmpty()?t2:t1.append(t2)
 
@@ -89,28 +83,22 @@ public class Query8 implements Query {
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
-                new EvictOnReportWindow<>(
-                        instance,
-                        "auctionWindow",
-                        contentFactory,
-                        report);
-
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> personWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
                 new LogicalSlidingWindow<>(
                         instance,
-                        "personWindow",
-                        slidingContentFactory,
-                        neverReport,
-                        2000);
+                        "bidWindow",
+                        contentFactory,
+                        report,
+                        100);
 
-        RelationToRelationOperator<Table> r2r = new R2Rq8(List.of("personWindow", "auctionWindow"), "res");
+
+        RelationToRelationOperator<Table> r2r = new R2Rq5(List.of("bidWindow"), "res");
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
         Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
-        task = task.addS2ROperator(auctionWindow, auction)
-                .addS2ROperator(personWindow, person)
+        task = task
+                .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
                 .addSDS(new SDSjtablesaw())

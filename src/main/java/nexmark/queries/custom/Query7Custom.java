@@ -1,11 +1,11 @@
-package nexmark.queries;
+package nexmark.queries.custom;
 
 import custom.customoperators.CustomTumblingWindow;
-import nexmark.content.MaxContentFactory;
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq7;
-import nexmark.operators.r2s.RelationToStreamRow;
-import nexmark.stream.StreamGenerator;
+import nexmark.content.custom.FastMaxFactory;
+import nexmark.operators.r2r.custom.R2Rq7;
+import nexmark.operators.r2s.R2SCustom;
+import nexmark.stream.StreamGeneratorCustom;
+import nexmark.utils.MyTask;
 import nexmark.utils.Query;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
@@ -20,16 +20,15 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
-import nexmark.utils.MyTask;
-import relational.sds.SDSjtablesaw;
+import org.streamreasoning.polyflow.base.sds.SDSDefault;
 import relational.stream.RowStream;
-import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
 
+import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Query7 implements Query {
+public class Query7Custom implements Query {
 
         /*
         Query 7 monitors the highest price items currently
@@ -53,14 +52,14 @@ public class Query7 implements Query {
 
     public void execute(){
 
-        StreamGenerator generator = new StreamGenerator();
+        StreamGeneratorCustom generator = new StreamGeneratorCustom();
 
-        DataStream<TimestampedElement<Table>> auction = generator.getStream("Auction");
-        DataStream<TimestampedElement<Table>> bid = generator.getStream("Bid");
-        DataStream<TimestampedElement<Table>> person = generator.getStream("Person");
+        DataStream<Entity> auction = generator.getStream("Auction");
+        DataStream<Entity> bid = generator.getStream("Bid");
+        DataStream<Entity> person = generator.getStream("Person");
 
         // define output stream
-        DataStream<Row> outStream = new RowStream("out");
+        DataStream<Entity> outStream = new RowStream("out");
 
         // Engine properties
         Report report = new ReportImpl();
@@ -69,31 +68,14 @@ public class Query7 implements Query {
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        MaxContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> contentFactory = new MaxContentFactory<>(
-                (t->t),
-                (t->t.getElement().copy()),
-                (t1, t2)->{
-                    if(t1 == null)
-                        return -1;
-                    Long currMax, element;
-                    currMax = t1.getElement().longColumn("price").get(0);
-                    element = t2.getElement().longColumn("price").get(0);
-                    if(currMax < element){
-                        return -1;
-                    }
-                    else if(currMax > element){
-                        return 1;
-                    }
-                    else return 0;
-                },
-                emptyContent);
+        FastMaxFactory contentFactory = new FastMaxFactory();
 
-        ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
+        ContinuousProgram<Entity, Entity, List<Entity>, Entity> cp = new ContinuousProgramImpl<>();
 
 
 
         //only interested in the bidWindow, which is a tumbling window of size 10 minutes
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+        StreamToRelationOperator<Entity, Entity, List<Entity>> bidWindow =
                 new CustomTumblingWindow<>(
                         instance,
                         "bidWindow",
@@ -101,26 +83,26 @@ public class Query7 implements Query {
                         report,
                         100); // width of 1000 is too much given the timestamps generated in our file
 
-        RelationToRelationOperator<Table> r2r = new R2Rq7(List.of("bidWindow"), "res");
-        RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
+        RelationToRelationOperator<List<Entity>> r2r = new R2Rq7(List.of("bidWindow"), "res");
+        RelationToStreamOperator<List<Entity>, Entity> r2sOp = new R2SCustom();
 
-        Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
+        Task<Entity, Entity, List<Entity>, Entity> task = new MyTask<>("1");
         task = task
                 .addS2ROperator(bidWindow, bid)
                 .addR2ROperator(r2r)
                 .addR2SOperator(r2sOp)
-                .addSDS(new SDSjtablesaw())
+                .addSDS(new SDSDefault<>())
                 .addDAG(new DAGImpl<>())
                 .addTime(instance);
         task.initialize();
 
-        List<DataStream<TimestampedElement<Table>>> inputStreams = new ArrayList<>();
+        List<DataStream<Entity>> inputStreams = new ArrayList<>();
         inputStreams.add(bid);
         inputStreams.add(auction);
         inputStreams.add(person);
 
 
-        List<DataStream<Row>> outputStreams = new ArrayList<>();
+        List<DataStream<Entity>> outputStreams = new ArrayList<>();
         outputStreams.add(outStream);
 
         cp.buildTask(task, inputStreams, outputStreams);
@@ -150,3 +132,4 @@ public class Query7 implements Query {
     }
 
 }
+

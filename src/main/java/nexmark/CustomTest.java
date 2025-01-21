@@ -1,13 +1,12 @@
 package nexmark;
 
-import nexmark.queries.Query1Custom;
-import nexmark.queries.Query6Custom;
-import nexmark.queries.Query7Custom;
+import nexmark.queries.custom.*;
+import nexmark.queries.tablesaw.Query4;
 import nexmark.utils.Query;
 
 public class CustomTest {
     public static void main(String [] args){
-        Query q = new Query6Custom();
+        Query q = new Query8Custom();
         double sum_throughput=0;
         double sum_totalTime=0;
         double sum_spentParsing=0;

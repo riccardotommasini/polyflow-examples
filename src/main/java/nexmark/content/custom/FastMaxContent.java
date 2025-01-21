@@ -1,27 +1,27 @@
 package nexmark.content.custom;
 
-import nexmark.customdatatypes.BidEvent;
+import nexmark.customdatatypes.custom.BidEvent;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 
-import java.io.Serializable;
+import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FastMaxContent implements Content<Serializable, Serializable, List<Serializable>> {
+public class FastMaxContent implements Content<Entity, Entity, List<Entity>> {
 
-    List<Serializable> content = new ArrayList<>();
+    List<Entity> content = new ArrayList<>();
     @Override
     public int size() {
         return content.size();
     }
 
     @Override
-    public void add(Serializable serializable) {
+    public void add(Entity Entity) {
         if(content.isEmpty())
-            content.add(serializable);
+            content.add(Entity);
         else {
             BidEvent curr = (BidEvent) content.get(0);
-            BidEvent candidate = (BidEvent)serializable;
+            BidEvent candidate = (BidEvent)Entity;
             if(candidate.price>curr.price) {
                 content.set(0, candidate);
             }
@@ -29,7 +29,7 @@ public class FastMaxContent implements Content<Serializable, Serializable, List<
     }
 
     @Override
-    public List<Serializable> coalesce() {
+    public List<Entity> coalesce() {
         return content;
     }
 }

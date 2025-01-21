@@ -1,6 +1,6 @@
 package nexmark.content.unused;
 
-import nexmark.customdatatypes.TimestampedElement;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.base.contentimpl.EmptyContent;

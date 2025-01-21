@@ -1,9 +1,8 @@
-package nexmark.customdatatypes;
+package nexmark.customdatatypes.custom;
 
-import java.io.Serializable;
 import java.time.Instant;
 
-public class AuctionEvent implements Serializable {
+public class AuctionEvent implements Entity {
     public long timestamp;
     public long key;
     /*  Here we have the fields of the auction  */

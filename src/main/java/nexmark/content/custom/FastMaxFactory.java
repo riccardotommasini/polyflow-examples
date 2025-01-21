@@ -4,18 +4,18 @@ import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.base.contentimpl.EmptyContent;
 
-import java.io.Serializable;
+import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FastMaxFactory implements ContentFactory<Serializable,Serializable, List<Serializable>> {
+public class FastMaxFactory implements ContentFactory<Entity,Entity, List<Entity>> {
     @Override
-    public Content<Serializable, Serializable, List<Serializable>> createEmpty() {
+    public Content<Entity, Entity, List<Entity>> createEmpty() {
         return new EmptyContent<>(new ArrayList<>());
     }
 
     @Override
-    public Content<Serializable, Serializable, List<Serializable>> create() {
+    public Content<Entity, Entity, List<Entity>> create() {
         return new FastMaxContent();
     }
 }

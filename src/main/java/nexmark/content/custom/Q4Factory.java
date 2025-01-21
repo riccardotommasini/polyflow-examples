@@ -1,20 +1,18 @@
 package nexmark.content.custom;
 
+import nexmark.customdatatypes.custom.Entity;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.base.contentimpl.EmptyContent;
 
-import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Q6ContentFactory implements ContentFactory<Entity, Entity, List<Entity>> {
+public class Q4Factory implements ContentFactory<Entity, Entity, List<Entity>> {
 
-    int windowSize;
     EvictContainerContent bidContent;
 
-    public Q6ContentFactory(int windowSize, EvictContainerContent bidContent){
-        this.windowSize = windowSize;
+    public Q4Factory(EvictContainerContent bidContent){
         this.bidContent = bidContent;
     }
     @Override
@@ -24,8 +22,6 @@ public class Q6ContentFactory implements ContentFactory<Entity, Entity, List<Ent
 
     @Override
     public Content<Entity, Entity, List<Entity>> create() {
-        return new Q6Content(windowSize, bidContent);
+        return new Q4Content(bidContent);
     }
 }
-
-

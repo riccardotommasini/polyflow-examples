@@ -1,8 +1,7 @@
 package nexmark.content;
 
-import nexmark.customdatatypes.TimestampedElement;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
 import org.streamreasoning.polyflow.api.secret.content.Content;
-import org.streamreasoning.polyflow.base.contentimpl.EmptyContent;
 import tech.tablesaw.api.Table;
 
 import java.util.ArrayList;

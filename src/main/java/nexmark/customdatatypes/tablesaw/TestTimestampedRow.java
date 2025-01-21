@@ -1,9 +1,6 @@
-package nexmark.customdatatypes;
+package nexmark.customdatatypes.tablesaw;
 
-import tech.tablesaw.api.Row;
 import tech.tablesaw.api.Table;
-
-import java.util.Iterator;
 
 public class TestTimestampedRow implements TimestampedElement<Table>{
 

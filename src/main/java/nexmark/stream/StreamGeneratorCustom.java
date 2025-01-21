@@ -1,26 +1,23 @@
 package nexmark.stream;
 
-import nexmark.customdatatypes.*;
+import nexmark.customdatatypes.custom.AuctionEvent;
+import nexmark.customdatatypes.custom.BidEvent;
+import nexmark.customdatatypes.custom.PersonEvent;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import relational.stream.RowStream;
 import relational.stream.RowStreamGenerator;
-import tech.tablesaw.api.InstantColumn;
-import tech.tablesaw.api.LongColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
-import tech.tablesaw.columns.Column;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.Serializable;
-import java.time.Instant;
+import nexmark.customdatatypes.custom.Entity;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamGeneratorCustom {
-    private final Map<String, DataStream<Serializable>> activeStreams;
+    private final Map<String, DataStream<Entity>> activeStreams;
 
     private File f1 = new File(RowStreamGenerator.class.getResource("/events.txt").getPath());
     private Scanner s1;
@@ -32,7 +29,7 @@ public class StreamGeneratorCustom {
 
 
     public StreamGeneratorCustom() {
-        this.activeStreams = new HashMap<String, DataStream<Serializable>>();
+        this.activeStreams = new HashMap<String, DataStream<Entity>>();
         this.isStreaming = new AtomicBoolean(false);
         try {
             s1 = new Scanner(f1);
@@ -40,9 +37,9 @@ public class StreamGeneratorCustom {
     }
 
 
-    public DataStream<Serializable> getStream(String streamURI) {
+    public DataStream<Entity> getStream(String streamURI) {
         if (!activeStreams.containsKey(streamURI)) {
-            RowStream<Serializable> stream = new RowStream<>(streamURI);
+            RowStream<Entity> stream = new RowStream<>(streamURI);
             activeStreams.put(streamURI, stream);
         }
         return activeStreams.get(streamURI);
@@ -72,7 +69,7 @@ public class StreamGeneratorCustom {
                 }
                 String name = b.toString();
                 tuple = tuple.substring(i+1, tuple.length()-1);
-                Serializable event;
+                Entity event;
                 if(name.equals("Auction")){
                     event = new AuctionEvent(tuple, ts);
                 }

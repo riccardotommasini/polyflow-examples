@@ -2,10 +2,10 @@ package nexmark.operators.r2r.custom;
 
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 
-import java.io.Serializable;
+import nexmark.customdatatypes.custom.Entity;
 import java.util.List;
 
-public class R2Rq7 implements RelationToRelationOperator<List<Serializable>> {
+public class R2Rq7 implements RelationToRelationOperator<List<Entity>> {
     List<String> tvgNames;
     String resName;
 
@@ -14,7 +14,7 @@ public class R2Rq7 implements RelationToRelationOperator<List<Serializable>> {
         this.resName = resName;
     }
     @Override
-    public List<Serializable> eval(List<List<Serializable>> list) {
+    public List<Entity> eval(List<List<Entity>> list) {
         return list.get(0);
     }
 

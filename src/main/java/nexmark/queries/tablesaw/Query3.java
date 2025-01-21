@@ -1,10 +1,14 @@
-package nexmark.queries;
+package nexmark.queries.tablesaw;
 
 
-import nexmark.customdatatypes.TimestampedElement;
-import nexmark.operators.r2r.tablesaw.R2Rq2;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_auction;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_join;
+import nexmark.operators.r2r.tablesaw.q3.R2Rq3_person;
 import nexmark.operators.r2s.RelationToStreamRow;
 import nexmark.operators.s2r.EvictOnReportWindow;
+import nexmark.operators.s2r.UnboundedWindow;
+import nexmark.report.Never;
 import nexmark.report.Periodic;
 import nexmark.stream.StreamGenerator;
 import nexmark.utils.Query;
@@ -30,19 +34,19 @@ import tech.tablesaw.api.Table;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-    Query 2 selects all bids on a set of five items and
-    tests the stream system’s selection operation.
+public class Query3 implements Query {
 
-    SELECT itemid, price
-    FROM bid
-    WHERE itemid = 1007 OR
-    itemid = 1020 OR
-    itemid = 2001 OR
-    itemid = 2019 OR
-    itemid = 1087;
- */
-public class Query2 implements Query {
+      /*
+        SELECT person.name, person.city,
+        person.state, open auction.id
+        FROM open auction, person, item
+        WHERE open auction.sellerId = person.id
+        AND person.state = ‘OR’
+        AND open auction.itemid = item.id
+        AND item.categoryId = 10;
+
+        */
+
     public double throughput;
     public double totalTime;
     public double timeSpentParsing;
@@ -59,13 +63,15 @@ public class Query2 implements Query {
 
         // Engine properties
         Report report = new ReportImpl();
-        report.add(new Periodic(1)); //TODO: review output strategy
+        report.add(new Periodic(1));
+
+        Report neverReport = new ReportImpl();
+        neverReport.add(new Never());
 
         Time instance = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        //The sliding factor should be the same as the window size
-        AccumulatorContentFactory<TimestampedElement<Table>,TimestampedElement<Table>, Table> contentFactory = new AccumulatorContentFactory<>(
+        AccumulatorContentFactory<TimestampedElement<Table>, TimestampedElement<Table>, Table> accumulateFactory = new AccumulatorContentFactory<>(
                 (t->t),
                 (t->t.getElement().copy()),
                 ((t1, t2)->t1.isEmpty()?t2:t1.append(t2)),
@@ -75,22 +81,32 @@ public class Query2 implements Query {
         ContinuousProgram<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> cp = new ContinuousProgramImpl<>();
 
 
-        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> bidWindow =
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> auctionWindow =
                 new EvictOnReportWindow<>(
                         instance,
-                        "bidWindow",
-                        contentFactory,
+                        "auctionWindow",
+                        accumulateFactory,
                         report);
+        StreamToRelationOperator<TimestampedElement<Table>, TimestampedElement<Table>, Table> peopleWindow =
+                new UnboundedWindow<>(
+                        instance,
+                        "peopleWindow",
+                        accumulateFactory,
+                        neverReport);
 
-
-        RelationToRelationOperator<Table> r2r = new R2Rq2(List.of("bidWindow"), "res");
+        RelationToRelationOperator<Table> r2r_people = new R2Rq3_person(List.of("peopleWindow"), "filteredPeople");
+        RelationToRelationOperator<Table> r2r_auction = new R2Rq3_auction(List.of("auctionWindow"), "filteredAuction");
+        RelationToRelationOperator<Table> r2r_join = new R2Rq3_join(List.of("filteredPeople", "filteredAuction"), "res");
 
         RelationToStreamOperator<Table, Row> r2sOp = new RelationToStreamRow();
 
         Task<TimestampedElement<Table>, TimestampedElement<Table>, Table, Row> task = new MyTask<>("1");
         task = task
-                .addS2ROperator(bidWindow, bid)
-                .addR2ROperator(r2r)
+                .addS2ROperator(peopleWindow, person)
+                .addS2ROperator(auctionWindow, auction)
+                .addR2ROperator(r2r_people)
+                .addR2ROperator(r2r_auction)
+                .addR2ROperator(r2r_join)
                 .addR2SOperator(r2sOp)
                 .addSDS(new SDSjtablesaw())
                 .addDAG(new DAGImpl<>())
@@ -131,6 +147,6 @@ public class Query2 implements Query {
     public double getTimeSpentParsing() {
         return timeSpentParsing;
     }
+
+
 }
-
-

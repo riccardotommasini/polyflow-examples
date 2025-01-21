@@ -1,6 +1,6 @@
 package nexmark;
 
-import nexmark.queries.*;
+import nexmark.queries.tablesaw.*;
 import nexmark.utils.Query;
 import java.io.File;
 import com.opencsv.CSVWriter;

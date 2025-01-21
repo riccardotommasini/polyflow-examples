@@ -2,12 +2,12 @@ package nexmark.content.custom;
 
 import org.streamreasoning.polyflow.api.secret.content.Content;
 
-import java.io.Serializable;
+import nexmark.customdatatypes.custom.Entity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FastAccumulatorContent implements Content<Serializable, Serializable, List<Serializable>> {
-    List<Serializable> content = new ArrayList<>();
+public class FastAccumulatorContent implements Content<Entity, Entity, List<Entity>> {
+    List<Entity> content = new ArrayList<>();
 
     @Override
     public int size() {
@@ -15,12 +15,12 @@ public class FastAccumulatorContent implements Content<Serializable, Serializabl
     }
 
     @Override
-    public void add(Serializable serializable) {
-        content.add(serializable);
+    public void add(Entity Entity) {
+        content.add(Entity);
     }
 
     @Override
-    public List<Serializable> coalesce() {
+    public List<Entity> coalesce() {
         return content;
     }
 }

@@ -1,7 +1,7 @@
 package nexmark.content.unused;
 
-import nexmark.customdatatypes.TestTimestampedRow;
-import nexmark.customdatatypes.TimestampedElement;
+import nexmark.customdatatypes.tablesaw.TestTimestampedRow;
+import nexmark.customdatatypes.tablesaw.TimestampedElement;
 import org.streamreasoning.polyflow.api.secret.content.Content;
 import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import tech.tablesaw.api.Table;
@@ -9,7 +9,6 @@ import tech.tablesaw.api.Table;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class SynContainerContent implements Content<TimestampedElement<Table>, TimestampedElement<Table>, List<Long>> {
