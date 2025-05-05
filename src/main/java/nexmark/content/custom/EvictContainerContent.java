@@ -35,12 +35,22 @@ public class EvictContainerContent implements Content<Entity, Entity, List<Entit
 
     @Override
     public List<Entity> coalesce() {
-        return keyedContent.values().stream().map(c->c.coalesce()).reduce(new ArrayList<>(), (r1, r2)->{
+        /*return keyedContent.values().stream().map(c->c.coalesce()).reduce(new ArrayList<>(), (r1, r2)->{
             List<Entity> res = new ArrayList<>();
             res.addAll(r1);
             res.addAll(r2);
             return res;
+        });*/
+
+        /*
+        * Here we optimize because we know that in the internal content (FastMaxContent) we have lists of only a single element
+        */
+        List<Entity> result = new ArrayList<>();
+        keyedContent.values().stream().map(c->c.coalesce()).forEach(l->{
+            if(!l.isEmpty())
+                result.add(l.get(0));
         });
+        return result;
     }
 
     public void removeKey(Long key){
