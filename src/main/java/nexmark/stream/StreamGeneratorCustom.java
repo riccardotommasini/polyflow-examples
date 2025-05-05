@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StreamGeneratorCustom {
     private final Map<String, DataStream<Entity>> activeStreams;
 
-    private File f1 = new File(RowStreamGenerator.class.getResource("/events.txt").getPath());
+    private File f1 = new File(StreamGeneratorCustom.class.getResource("/events.txt").getPath());
     private Scanner s1;
     private final AtomicBoolean isStreaming;
     public double numEvents = 1000000;
