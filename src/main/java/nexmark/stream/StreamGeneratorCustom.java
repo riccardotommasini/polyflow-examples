@@ -54,8 +54,8 @@ public class StreamGeneratorCustom {
             totalTime = 0;
             long prev_ts = -1;
             while (this.isStreaming.get() && s1.hasNext()) {
-                long parseStart = System.currentTimeMillis();
                 String tuple = s1.nextLine();
+                long parseStart = System.currentTimeMillis();
                 String[] valAndTs = tuple.split(",", 2);
                 long ts = Long.parseLong(valAndTs[0]);
                 prev_ts = ts;
