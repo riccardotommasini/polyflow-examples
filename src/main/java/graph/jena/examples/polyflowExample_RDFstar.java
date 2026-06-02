@@ -15,6 +15,7 @@ import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
 import org.streamreasoning.polyflow.api.secret.report.Report;
@@ -25,7 +26,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 
@@ -52,7 +54,7 @@ public class polyflowExample_RDFstar {
 
         JenaGraphOrBindings emptyContent = new JenaGraphOrBindings(GraphFactory.createGraphMem());
 
-        AccumulatorContentFactory<Graph, Graph, JenaGraphOrBindings> accumulatorContentFactory = new AccumulatorContentFactory<>(
+        SegmentFactory<Graph, JenaGraphOrBindings> accumulatorContentFactory = new AccumulatorContentFactory<>(
                 (g) -> g,
                 (g) -> new JenaGraphOrBindings(g),
                 (r1, r2) -> new JenaGraphOrBindings(new Union(r1.getContent(), r2.getContent())),
@@ -62,12 +64,12 @@ public class polyflowExample_RDFstar {
 
         ContinuousProgram<Graph, Graph, JenaGraphOrBindings, Binding> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<Graph, Graph, JenaGraphOrBindings> s2rOp =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Graph, JenaGraphOrBindings> s2rOp =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        accumulatorContentFactory,
+                        new MapMultiBufferState<>(accumulatorContentFactory),
                         report,
                         1000,
                         1000);

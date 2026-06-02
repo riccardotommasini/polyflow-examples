@@ -3,6 +3,9 @@ package relational.examples;
 import org.javatuples.Tuple;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
+import org.streamreasoning.polyflow.api.enums.AggregationFunction;
+import org.streamreasoning.polyflow.api.enums.FrameClosingCondition;
+import org.streamreasoning.polyflow.api.enums.FrameType;
 import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
@@ -20,7 +23,8 @@ import relational.stream.RowStream;
 import relational.stream.RowStreamGenerator;
 import org.streamreasoning.polyflow.base.contentimpl.factories.StatefulContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.FrameOp;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.SBFramesWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.SingleBufferState;
 import tech.tablesaw.api.*;
 
 import java.util.ArrayList;
@@ -113,13 +117,18 @@ public class polyflow_AggregateFrame {
 
         ContinuousProgram<Tuple, Tuple, Table, Tuple> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_1 =
-                new FrameOp<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_1 =
+                new SBFramesWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        statefulContentFactory,
-                        report);
+                        new SingleBufferState<>(statefulContentFactory, (tuple, timestamp) -> true, (tuple, timestamp) -> true),
+                        report,
+                        FrameType.AGGREGATE,
+                        20,
+                        AggregationFunction.SUM,
+                        tuple -> ((Number) tuple.getValue(2)).doubleValue(),
+                        FrameClosingCondition.GREATER_THAN);
 
 
 

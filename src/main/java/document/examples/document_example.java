@@ -19,7 +19,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 import org.streamreasoning.polyflow.base.sds.SDSDefault;
@@ -58,12 +59,12 @@ public class document_example {
 
         ContinuousProgram<String, String, DocumentCollection, String> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<String, String, DocumentCollection> s2rOp_1 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<String, DocumentCollection> s2rOp_1 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        accumulatorContentFactory,
+                        new MapMultiBufferState<>(accumulatorContentFactory),
                         report,
                         1000,
                         1000);

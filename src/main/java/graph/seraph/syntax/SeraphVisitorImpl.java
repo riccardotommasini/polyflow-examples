@@ -16,8 +16,8 @@ import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.processing.Task;
-import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.report.strategies.OnWindowClose;
@@ -25,7 +25,8 @@ import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 
 import java.time.Duration;
@@ -34,13 +35,13 @@ import java.util.*;
 public class SeraphVisitorImpl extends SeraphBaseVisitor<ContinuousQuery> {
 
 
-    private Map<String, StreamToRelationOperator<PGraph, PGraph, PGraphOrResult>> inputs = new HashMap<>();
+    private Map<String, StreamToRelationOperator<PGraph, PGraphOrResult>> inputs = new HashMap<>();
     private Map<String, R2S> outputs = new HashMap<>();
     private Map<String, String> inputParameters = new HashMap<>();
     private Map<String, Object> outputParameters = new HashMap<>();
     private List<String> projections = new ArrayList<>();
     private Map<String, List<StringBuilder>> relationParameters = new HashMap<>();
-    private final ContentFactory<PGraph, PGraph, PGraphOrResult> accumulatorContentFactory;
+    private final SegmentFactory<PGraph, PGraphOrResult> accumulatorContentFactory;
 
 
     private final Report report = new ReportImpl();
@@ -173,7 +174,7 @@ public class SeraphVisitorImpl extends SeraphBaseVisitor<ContinuousQuery> {
         Duration range = Duration.parse(relationParameters.get("range").get(0));
         Duration period = Duration.parse((CharSequence) outputParameters.get("period"));
 
-        HoppingWindowOpImpl<PGraph, PGraph, PGraphOrResult> w1 = new HoppingWindowOpImpl<>(tick, instance, "w1", accumulatorContentFactory, report, range.toMillis(), period.toMillis());
+        StreamToRelationOperator<PGraph, PGraphOrResult> w1 = new MBHoppingWindowOpImpl<>(tick, instance, "w1", new MapMultiBufferState<>(accumulatorContentFactory), report, range.toMillis(), period.toMillis());
 
         Task<PGraph, PGraph, PGraphOrResult, Result> task = new TaskImpl<>();
 

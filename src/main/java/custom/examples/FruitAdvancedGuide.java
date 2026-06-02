@@ -11,9 +11,9 @@ import custom.stream.FruitStreamGenerator;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
-import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.report.strategies.OnWindowClose;
@@ -53,7 +53,7 @@ public class FruitAdvancedGuide {
         FruitBasket emptyBasket = new FruitBasket();
 
         // Factory object to manage the window content, more informations on our GitHub guide!
-        ContentFactory<Fruit, Fruit, FruitBasket> filterContentFactory = new FilterContentFactory<>(
+        SegmentFactory<Fruit, FruitBasket> filterContentFactory = new FilterContentFactory<>(
                 (fruit) -> fruit,
                 (fruit) -> {
                     FruitBasket fb = new FruitBasket();
@@ -73,7 +73,7 @@ public class FruitAdvancedGuide {
                 (fruit) -> fruit.getWeight() > 2
         );
 
-        ContentFactory<Fruit, Fruit, FruitBasket> accumulatorContentFactory = new AccumulatorContentFactory<>(
+        SegmentFactory<Fruit, FruitBasket> accumulatorContentFactory = new AccumulatorContentFactory<>(
                 (fruit) -> fruit,
                 (fruit) -> {
                     FruitBasket fb = new FruitBasket();
@@ -106,7 +106,7 @@ public class FruitAdvancedGuide {
         /*------------S2R, R2R and R2S Operators------------*/
 
         //Define the Stream to Relation operators (blueprint of the windows)
-        StreamToRelationOperator<Fruit, Fruit, FruitBasket> fruit_s2r_one =
+        StreamToRelationOperator<Fruit, FruitBasket> fruit_s2r_one =
                 new CustomTumblingWindow<>(
                         instance,
                         "TumblingWindow_one",
@@ -114,7 +114,7 @@ public class FruitAdvancedGuide {
                         report,
                         1000);
 
-        StreamToRelationOperator<Fruit, Fruit, FruitBasket> fruit_s2r_two =
+        StreamToRelationOperator<Fruit, FruitBasket> fruit_s2r_two =
                 new CustomTumblingWindow<>(
                         instance,
                         "TumblingWindow_two",

@@ -17,7 +17,8 @@ import static tech.tablesaw.aggregate.AggregateFunctions.*;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AggregateContentFactory;
 import org.streamreasoning.polyflow.base.contentimpl.factories.ContainerContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ParallelContinuousProgram;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 import relational.operatorsimpl.r2s.RelationToStreamjtablesawImpl;
@@ -116,30 +117,30 @@ public class keyval_partition{
                 aggregateContentFactory);
 
 
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_1 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_1 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance_1,
                         "w1",
-                        containerContentFactory,
+                        new MapMultiBufferState<>(containerContentFactory),
                         report,
                         1000,
                         1000);
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_2 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_2 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance_2,
                         "w1",
-                        containerContentFactory,
+                        new MapMultiBufferState<>(containerContentFactory),
                         report,
                         1000,
                         1000);
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_3 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_3 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance_3,
                         "w1",
-                        containerContentFactory,
+                        new MapMultiBufferState<>(containerContentFactory),
                         report,
                         1000,
                         1000);

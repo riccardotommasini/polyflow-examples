@@ -5,6 +5,7 @@ import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
 import org.streamreasoning.polyflow.api.sds.timevarying.TimeVarying;
@@ -16,7 +17,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 import relational.operatorsimpl.r2r.CustomRelationalQuery;
@@ -52,7 +54,8 @@ public class polyflow_LazyEvaluation {
         Time instance_2 = new TimeImpl(0);
         Table emptyContent = Table.create();
 
-        AccumulatorContentFactory<Tuple, Tuple, Table> accumulatorContentFactory = new AccumulatorContentFactory<>(
+
+        SegmentFactory<Tuple, Table> accumulatorContentFactory = new AccumulatorContentFactory<>(
                 t -> t,
                 (t) -> {
                     Table r = Table.create();
@@ -108,24 +111,25 @@ public class polyflow_LazyEvaluation {
 
         );
 
+        MapMultiBufferState<Tuple, Table> mapMbState = new MapMultiBufferState<>(accumulatorContentFactory);
 
         ContinuousProgram<Tuple, Tuple, Table, Tuple> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_1 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_1 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        accumulatorContentFactory,
+                        mapMbState,
                         report,
                         1000,
                         1000);
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_2 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_2 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance_2,
                         "w2",
-                        accumulatorContentFactory,
+                        mapMbState,
                         report,
                         1000,
                         1000);

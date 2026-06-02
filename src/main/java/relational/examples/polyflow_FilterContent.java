@@ -15,7 +15,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.FilterContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 import relational.operatorsimpl.r2r.CustomRelationalQuery;
@@ -115,21 +116,21 @@ public class polyflow_FilterContent {
         //TableWrapper because we need the interface convertible on the W generic type
         ContinuousProgram<Tuple, Tuple, Table, Tuple> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_1 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_1 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        filterContentFactory,
+                        new MapMultiBufferState<>(filterContentFactory),
                         report,
                         1000,
                         1000);
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_2 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_2 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w2",
-                        filterContentFactory,
+                        new MapMultiBufferState<>(filterContentFactory),
                         report,
                         1000,
                         1000);

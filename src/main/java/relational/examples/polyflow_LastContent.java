@@ -15,7 +15,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.LastContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 import relational.operatorsimpl.r2r.CustomRelationalQuery;
@@ -107,21 +108,21 @@ public class polyflow_LastContent {
 
         ContinuousProgram<Tuple, Tuple, Table, Tuple> cp = new ContinuousProgramImpl<>();
 
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_1 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_1 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w1",
-                        lastContentFactory,
+                        new MapMultiBufferState<>(lastContentFactory),
                         report,
                         1000,
                         1000);
-        StreamToRelationOperator<Tuple, Tuple, Table> s2rOp_2 =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Tuple, Table> s2rOp_2 =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         "w2",
-                        lastContentFactory,
+                        new MapMultiBufferState<>(lastContentFactory),
                         report,
                         1000,
                         1000);

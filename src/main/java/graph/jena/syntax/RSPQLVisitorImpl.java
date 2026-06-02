@@ -24,7 +24,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 
 import java.time.Duration;
@@ -73,12 +74,12 @@ public class RSPQLVisitorImpl extends RSPQLBaseVisitor<Task<Graph, Graph, JenaGr
 
         System.out.println(windowUri);
 
-        StreamToRelationOperator<Graph, Graph, JenaGraphOrBindings> s2rOp =
-                new HoppingWindowOpImpl<>(
+        StreamToRelationOperator<Graph, JenaGraphOrBindings> s2rOp =
+                new MBHoppingWindowOpImpl<>(
                         tick,
                         instance,
                         windowUri,
-                        accumulatorContentFactory,
+                        new MapMultiBufferState<>(accumulatorContentFactory),
                         report,
                         range.toMillis(),
                         step.toMillis());

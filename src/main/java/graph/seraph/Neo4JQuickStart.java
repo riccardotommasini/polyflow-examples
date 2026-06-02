@@ -12,9 +12,9 @@ import org.streamreasoning.polyflow.api.enums.Tick;
 import org.streamreasoning.polyflow.api.operators.r2r.RelationToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.r2s.RelationToStreamOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.processing.ContinuousProgram;
 import org.streamreasoning.polyflow.api.processing.Task;
-import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.report.ReportImpl;
 import org.streamreasoning.polyflow.api.secret.report.strategies.OnWindowClose;
@@ -23,7 +23,8 @@ import org.streamreasoning.polyflow.api.secret.time.TimeImpl;
 import org.streamreasoning.polyflow.api.stream.data.DataStream;
 import org.streamreasoning.polyflow.base.contentimpl.factories.AccumulatorContentFactory;
 import org.streamreasoning.polyflow.base.operatorsimpl.dag.DAGImpl;
-import org.streamreasoning.polyflow.base.operatorsimpl.s2r.HoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.MBHoppingWindowOpImpl;
+import org.streamreasoning.polyflow.base.operatorsimpl.s2r.state.MapMultiBufferState;
 import org.streamreasoning.polyflow.base.processing.ContinuousProgramImpl;
 import org.streamreasoning.polyflow.base.processing.TaskImpl;
 
@@ -86,15 +87,15 @@ public class Neo4JQuickStart {
         The logic behind the content can be customized by defining your own factory and content classes, this particular instance
         of content just accumulates what enters the window.
          */
-        ContentFactory<PGraph, PGraph, PGraphOrResult> accumulatorContentFactory = new AccumulatorContentFactory<>((g) -> g, PGraphOrResult::new, PGraphOrResult::new, emptyContent);
+        SegmentFactory<PGraph, PGraphOrResult> accumulatorContentFactory = new AccumulatorContentFactory<>((g) -> g, PGraphOrResult::new, PGraphOrResult::new, emptyContent);
 
 
         /*------------S2R, R2R and R2S Operators------------*/
 
         //Define the Stream to Relation operators (blueprint of the windows), each with its own size and sliding parameters.
-        StreamToRelationOperator<PGraph, PGraph, PGraphOrResult> s2rOp_one = new HoppingWindowOpImpl<>(tick, instance, "w1", accumulatorContentFactory, report, 1000, 1000);
+        StreamToRelationOperator<PGraph, PGraphOrResult> s2rOp_one = new MBHoppingWindowOpImpl<>(tick, instance, "w1", new MapMultiBufferState<>(accumulatorContentFactory), report, 1000, 1000);
 
-//        StreamToRelationOperator<PGraph, PGraph, PGraphOrBindings> s2rOp_two =
+//        StreamToRelationOperator<PGraph, PGraphOrBindings> s2rOp_two =
 //                new CSPARQLStreamToRelationOpImpl<>(
 //                        tick,
 //                        instance,

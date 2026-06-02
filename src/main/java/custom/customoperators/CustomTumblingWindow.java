@@ -5,9 +5,9 @@ import org.streamreasoning.polyflow.api.exceptions.OutOfOrderElementException;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.assigner.StreamToRelationOperator;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.instance.Window;
 import org.streamreasoning.polyflow.api.operators.s2r.execution.instance.WindowImpl;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.Segment;
+import org.streamreasoning.polyflow.api.operators.s2r.execution.state.SegmentFactory;
 import org.streamreasoning.polyflow.api.sds.timevarying.TimeVarying;
-import org.streamreasoning.polyflow.api.secret.content.Content;
-import org.streamreasoning.polyflow.api.secret.content.ContentFactory;
 import org.streamreasoning.polyflow.api.secret.report.Report;
 import org.streamreasoning.polyflow.api.secret.time.Time;
 import org.streamreasoning.polyflow.api.secret.time.TimeInstant;
@@ -45,20 +45,20 @@ import java.util.List;
  */
 
 
-public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements StreamToRelationOperator<I, W, R> {
+public class CustomTumblingWindow<I, R extends Iterable<?>> implements StreamToRelationOperator<I, R> {
 
     protected final Time time;
     protected final String name;
-    protected final ContentFactory<I, W, R> cf;
+    protected final SegmentFactory<I, R> cf;
     protected Report report;
     private final long width;
     private Window active_window;
     private Window reported_window;
-    private Content<I, W, R> active_content;
-    private Content<I, W, R> reported_content;
+    private Segment<I, R> active_content;
+    private Segment<I, R> reported_content;
     private long t0;
 
-    public CustomTumblingWindow(Time time, String name, ContentFactory<I, W, R> cf, Report report,
+    public CustomTumblingWindow(Time time, String name, SegmentFactory<I, R> cf, Report report,
                                 long width) {
 
         this.time = time;
@@ -87,7 +87,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
 
 
     @Override
-    public Content<I, W, R> content(long t_e) {
+    public Segment<I, R> content(long t_e) {
         if (reported_content != null)
             return reported_content;
         //If I need the content when the reported_content is null, it means that someone else triggered the computation, so we just return the active content if present
@@ -97,7 +97,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
     }
 
     @Override
-    public List<Content<I, W, R>> getContents(long t_e) {
+    public List<Segment<I, R>> getContents(long t_e) {
         if (reported_content != null)
             return Collections.singletonList(reported_content);
         else return Collections.singletonList(cf.createEmpty());
@@ -138,7 +138,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
             time.addEvaluationTimeInstants(new TimeInstant(ts));
         }
 
-        if (active_window.getC() < ts) {
+        if (active_window != null && active_window.getC() < ts) {
             active_window = scope(ts);
             active_content = cf.create();
             active_content.add(arg);
@@ -164,7 +164,7 @@ public class CustomTumblingWindow<I, W, R extends Iterable<?>> implements Stream
     public void evict(long ts) {
         reported_window = null;
         reported_content = null;
-        if (active_window.getC() < ts) {
+        if (active_window != null && active_window.getC() < ts) {
             active_window = null;
             reported_content = null;
         }
